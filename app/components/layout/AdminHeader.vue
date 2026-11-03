@@ -1,9 +1,21 @@
 <script setup lang="ts">
-import { Bell, ChevronDown, House } from 'lucide-vue-next'
+import { headerRoleLabel, initialsOf } from '~~/shared/types/auth'
+import { roleLabel, statusLabel } from '~~/shared/types/health-worker'
+import { Bell, ChevronDown, House, LogOut, Settings } from 'lucide-vue-next'
+import { useLogoutMutation } from '~/composables/queries/useAuthQueries'
 
 const route = useRoute()
 const title = computed(() => (typeof route.meta.title === 'string' ? route.meta.title : 'Dashboard'))
 const today = ref('')
+
+const { user } = useAuthSession()
+const logoutMutation = useLogoutMutation()
+
+const initials = computed(() => (user.value ? initialsOf(user.value.fullName) : 'DM'))
+const subtitle = computed(() => {
+  if (!user.value) return 'Tamu'
+  return `${headerRoleLabel[user.value.accessLevel]} • ${statusLabel[user.value.status]}`
+})
 
 onMounted(() => {
   today.value = new Intl.DateTimeFormat('id-ID', {
@@ -43,16 +55,52 @@ onMounted(() => {
 
       <span class="h-5 w-px bg-border-subtle" aria-hidden="true" />
 
-      <div class="flex items-center gap-space-sm pl-space-xs">
-        <Avatar class="size-8">
-          <AvatarFallback class="bg-primary-surface font-label-sm text-label-sm text-primary">SJ</AvatarFallback>
-        </Avatar>
-        <div class="hidden flex-col text-left sm:flex">
-          <span class="font-label-md text-label-md font-medium leading-tight text-text-primary">drg. Sarah Jenkins</span>
-          <span class="font-caption text-caption leading-tight text-text-muted">Dokter Gigi / Admin</span>
-        </div>
-        <ChevronDown class="hidden size-[18px] text-text-muted sm:block" aria-hidden="true" />
-      </div>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          class="flex items-center gap-space-sm rounded-lg pl-space-xs outline-none transition-colors hover:bg-surface-container-low focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <Avatar class="size-8">
+            <AvatarImage v-if="user?.avatarUrl" :src="user.avatarUrl" :alt="user.fullName" />
+            <AvatarFallback class="bg-primary-surface font-label-sm text-label-sm text-primary">
+              {{ initials }}
+            </AvatarFallback>
+          </Avatar>
+          <div class="hidden flex-col text-left sm:flex">
+            <span class="font-label-md text-label-md font-medium leading-tight text-text-primary">
+              {{ user?.fullName ?? 'Belum masuk' }}
+            </span>
+            <span class="font-caption text-caption leading-tight text-text-muted">{{ subtitle }}</span>
+          </div>
+          <ChevronDown class="hidden size-[18px] text-text-muted sm:block" aria-hidden="true" />
+        </DropdownMenuTrigger>
+
+        <DropdownMenuContent align="end" class="w-64">
+          <DropdownMenuLabel>
+            <p class="font-label-md text-label-md font-medium text-text-primary">
+              {{ user?.fullName ?? 'Belum masuk' }}
+            </p>
+            <p class="font-caption text-caption text-text-muted">
+              {{ user ? `${user.medicalId} • ${roleLabel[user.role]}` : 'Sesi tidak aktif' }}
+            </p>
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem as-child>
+            <NuxtLink to="/pengaturan" class="flex w-full items-center gap-2">
+              <Settings class="size-4" aria-hidden="true" />
+              Pengaturan Akun
+            </NuxtLink>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            class="text-status-danger focus:bg-status-danger-bg focus:text-status-danger"
+            :disabled="logoutMutation.isPending.value"
+            @select="logoutMutation.mutate()"
+          >
+            <LogOut class="size-4" aria-hidden="true" />
+            {{ logoutMutation.isPending.value ? 'Keluar...' : 'Keluar' }}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   </header>
 </template>

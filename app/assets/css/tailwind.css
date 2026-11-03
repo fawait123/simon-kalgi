@@ -1,3 +1,6 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap');
+
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn-vue/tailwind.css";
@@ -75,6 +78,7 @@
   --color-status-info-bg: #f0f9ff;
   --color-error: #ba1a1a;
   --color-error-container: #ffdad6;
+  --color-clinical-night: #134e4a;
 
   --text-metric-display: 28px;
   --text-metric-display--line-height: 34px;
@@ -164,6 +168,18 @@
     @apply bg-background text-foreground font-sans antialiased;
     @apply bg-background text-foreground;
     @apply font-sans;
+  }
+}
+
+@layer utilities {
+  .clinical-pattern {
+    background-image: radial-gradient(var(--color-primary-container) 0.75px, transparent 0.75px);
+    background-size: 20px 20px;
+  }
+
+  .clinical-pattern-invert {
+    background-image: radial-gradient(rgb(255 255 255 / 60%) 0.75px, transparent 0.75px);
+    background-size: 20px 20px;
   }
 }
 

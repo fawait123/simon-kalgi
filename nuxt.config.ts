@@ -16,6 +16,10 @@ export default defineNuxtConfig({
     prefix: '',
     componentDir: './app/components/ui',
   },
+  runtimeConfig: {
+    // Secret penandatangan sesi (JWT HS256). Isi lewat NUXT_SESSION_SECRET, jangan hardcode.
+    sessionSecret: '',
+  },
   app: {
     head: {
       title: 'DentaCare Pro — Sistem Monitoring Kesehatan Gigi dan Mulut',

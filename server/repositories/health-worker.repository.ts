@@ -29,6 +29,24 @@ export const healthWorkerSelect = {
 
 type DBClient = Prisma.TransactionClient | typeof prisma
 
+export const healthWorkerSessionSelect = {
+  id: true,
+  medicalId: true,
+  fullName: true,
+  username: true,
+  email: true,
+  role: true,
+  specialization: true,
+  accessLevel: true,
+  status: true,
+  isPic: true,
+  avatarUrl: true,
+  dutyDays: true,
+  dutyTime: true,
+} satisfies Prisma.HealthWorkerSelect
+
+export const healthWorkerAuthSelect = { ...healthWorkerSessionSelect, passwordHash: true }
+
 export const healthWorkerRepository = {
   transaction<T>(callback: (client: Prisma.TransactionClient) => Promise<T>) {
     return prisma.$transaction(callback)
@@ -51,6 +69,23 @@ export const healthWorkerRepository = {
 
   findById(id: string, client: DBClient = prisma) {
     return client.healthWorker.findUnique({ where: { id }, select: healthWorkerSelect })
+  },
+
+  findSessionUser(id: string, client: DBClient = prisma) {
+    return client.healthWorker.findUnique({ where: { id }, select: healthWorkerSessionSelect })
+  },
+
+  findByCredential(identifier: string, client: DBClient = prisma) {
+    return client.healthWorker.findFirst({
+      where: {
+        OR: [
+          { username: { equals: identifier, mode: 'insensitive' } },
+          { email: { equals: identifier, mode: 'insensitive' } },
+          { medicalId: { equals: identifier, mode: 'insensitive' } },
+        ],
+      },
+      select: healthWorkerAuthSelect,
+    })
   },
 
   countByMedicalIdPrefix(prefix: string, client: DBClient = prisma) {
