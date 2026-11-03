@@ -1,2 +1,6 @@
 allowBuilds:
-  esbuild: false
+  esbuild: true
+  vue-demi: true
+  '@prisma/engines': true
+  prisma: true
+  '@prisma/client': true

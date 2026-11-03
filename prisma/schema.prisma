@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum HealthWorkerRole {
+  spesialis
+  umum
+  perawat
+  asisten
+}
+
+enum WorkerStatus {
+  aktif
+  cuti
+  nonaktif
+}
+
+enum Gender {
+  L
+  P
+}
+
+enum EmploymentStatus {
+  tetap
+  mitra
+  residen
+}
+
+enum AccessLevel {
+  dokter
+  perawat
+  admin
+}
+
+model HealthWorker {
+  id               String           @id @default(uuid()) @db.Uuid
+  medicalId        String           @unique @map("medical_id") @db.VarChar(15)
+  fullName         String           @map("full_name") @db.VarChar(120)
+  nik              String           @unique @db.Char(16)
+  birthDate        DateTime         @map("birth_date") @db.Date
+  gender           Gender
+  employmentStatus EmploymentStatus @default(tetap) @map("employment_status")
+  role             HealthWorkerRole
+  specialization   String?          @db.VarChar(100)
+  strNumber        String           @map("str_number") @db.VarChar(40)
+  strExpiryDate    DateTime         @map("str_expiry_date") @db.Date
+  phone            String           @db.VarChar(20)
+  email            String           @unique @db.VarChar(120)
+  address          String?          @db.VarChar(255)
+  username         String           @unique @db.VarChar(40)
+  passwordHash     String           @map("password_hash")
+  accessLevel      AccessLevel      @map("access_level")
+  dutyDays         String           @map("duty_days") @db.VarChar(80)
+  dutyTime         String           @map("duty_time") @db.VarChar(60)
+  status           WorkerStatus     @default(aktif)
+  isPic            Boolean          @default(false) @map("is_pic")
+  avatarUrl        String?          @map("avatar_url")
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+
+  @@index([role])
+  @@index([status])
+  @@index([strNumber])
+  @@map("health_workers")
+}
