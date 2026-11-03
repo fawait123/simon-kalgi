@@ -6,7 +6,7 @@ import type {
 } from '~~/shared/schemas/health-worker.schema'
 import type { HealthWorkerDto } from '~~/shared/types/health-worker'
 import { toTypedSchema } from '@vee-validate/zod'
-import { Check, ChevronDown, Save, UserPlus } from 'lucide-vue-next'
+import { Check, Save, UserPlus } from 'lucide-vue-next'
 import { useForm } from 'vee-validate'
 import {
   createHealthWorkerSchema,
@@ -145,8 +145,9 @@ const onSubmit = handleSubmit((values) => {
 
 <template>
   <Dialog v-model:open="open">
-    <DialogContent class="max-w-3xl gap-0 overflow-hidden rounded-xl p-0">
-      <div class="flex items-center gap-space-md border-b border-border-subtle bg-primary-surface px-space-xl py-space-lg">
+    <DialogContent class="max-w-[70vw] min-w-[35vw] gap-0 overflow-hidden rounded-xl p-0">
+      <div
+        class="flex items-center gap-space-md border-b border-border-subtle bg-primary-surface px-space-xl py-space-lg">
         <span class="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
           <UserPlus class="size-5" aria-hidden="true" />
         </span>
@@ -161,13 +162,10 @@ const onSubmit = handleSubmit((values) => {
       </div>
 
       <form class="flex max-h-[65vh] flex-col gap-space-lg overflow-y-auto px-space-xl py-space-lg" @submit="onSubmit">
-        <section
-          v-for="section in sections"
-          :key="section.number"
-          class="flex flex-col gap-space-md"
-        >
+        <section v-for="section in sections" :key="section.number" class="flex flex-col gap-space-md">
           <div class="flex items-center gap-space-sm border-b border-border-subtle pb-2">
-            <span class="flex size-6 items-center justify-center rounded-full bg-primary font-label-sm text-label-sm text-primary-foreground">
+            <span
+              class="flex size-6 items-center justify-center rounded-full bg-primary font-label-sm text-label-sm text-primary-foreground">
               {{ section.number }}
             </span>
             <div class="flex flex-col">
@@ -182,7 +180,8 @@ const onSubmit = handleSubmit((values) => {
                 <FormItem class="flex flex-col gap-1.5 sm:col-span-2">
                   <FormLabel class="font-label-md text-label-md">Nama Lengkap &amp; Gelar</FormLabel>
                   <FormControl>
-                    <Input v-bind="componentField" autocomplete="off" class="h-10 rounded-lg" placeholder="drg. Nama Lengkap, Sp.XX" />
+                    <Input v-bind="componentField" autocomplete="off" class="h-10 rounded-lg"
+                      placeholder="drg. Nama Lengkap, Sp.XX" />
                   </FormControl>
                   <FormMessage class="font-caption text-caption" />
                 </FormItem>
@@ -192,7 +191,8 @@ const onSubmit = handleSubmit((values) => {
                 <FormItem class="flex flex-col gap-1.5">
                   <FormLabel class="font-label-md text-label-md">NIK</FormLabel>
                   <FormControl>
-                    <Input v-bind="componentField" inputmode="numeric" maxlength="16" autocomplete="off" class="h-10 rounded-lg font-mono" placeholder="16 digit angka" />
+                    <Input v-bind="componentField" inputmode="numeric" maxlength="16" autocomplete="off"
+                      class="h-10 rounded-lg font-mono" placeholder="16 digit angka" />
                   </FormControl>
                   <FormMessage class="font-caption text-caption" />
                 </FormItem>
@@ -210,10 +210,8 @@ const onSubmit = handleSubmit((values) => {
 
               <FormField v-slot="{ componentField, errorMessage }" name="gender">
                 <FormItem class="flex flex-col gap-1.5">
-                  <span
-                    id="worker-gender-label"
-                    :class="['font-label-md text-label-md', errorMessage ? 'text-destructive' : '']"
-                  >
+                  <span id="worker-gender-label"
+                    :class="['font-label-md text-label-md', errorMessage ? 'text-destructive' : '']">
                     Jenis Kelamin
                   </span>
                   <FormControl>
@@ -234,21 +232,15 @@ const onSubmit = handleSubmit((values) => {
 
               <FormField v-slot="{ componentField, errorMessage }" name="employmentStatus">
                 <FormItem class="flex flex-col gap-1.5">
-                  <Label
-                    for="worker-employment-status"
-                    :class="['font-label-md text-label-md', errorMessage ? 'text-destructive' : '']"
-                  >
+                  <Label for="worker-employment-status"
+                    :class="['font-label-md text-label-md', errorMessage ? 'text-destructive' : '']">
                     Status Kepegawaian
                   </Label>
                   <FormControl>
                     <Select v-bind="componentField">
-                      <SelectTrigger
-                        id="worker-employment-status"
-                        :aria-invalid="Boolean(errorMessage)"
-                        class="h-10 rounded-lg bg-background font-body-sm"
-                      >
+                      <SelectTrigger id="worker-employment-status" :aria-invalid="Boolean(errorMessage)"
+                        class="h-10 rounded-lg bg-background font-body-sm">
                         <SelectValue placeholder="Pilih status kepegawaian" />
-                        <ChevronDown class="size-4 text-text-muted" aria-hidden="true" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem v-for="option in employmentOptions" :key="option.value" :value="option.value">
@@ -265,21 +257,15 @@ const onSubmit = handleSubmit((values) => {
             <template v-if="section.number === 2">
               <FormField v-slot="{ componentField, errorMessage }" name="role">
                 <FormItem class="flex flex-col gap-1.5">
-                  <Label
-                    for="worker-role"
-                    :class="['font-label-md text-label-md', errorMessage ? 'text-destructive' : '']"
-                  >
+                  <Label for="worker-role"
+                    :class="['font-label-md text-label-md', errorMessage ? 'text-destructive' : '']">
                     Peran / Jabatan
                   </Label>
                   <FormControl>
                     <Select v-bind="componentField">
-                      <SelectTrigger
-                        id="worker-role"
-                        :aria-invalid="Boolean(errorMessage)"
-                        class="h-10 rounded-lg bg-background font-body-sm"
-                      >
+                      <SelectTrigger id="worker-role" :aria-invalid="Boolean(errorMessage)"
+                        class="h-10 rounded-lg bg-background font-body-sm">
                         <SelectValue placeholder="Pilih peran" />
-                        <ChevronDown class="size-4 text-text-muted" aria-hidden="true" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem v-for="option in roleOptions" :key="option.value" :value="option.value">
@@ -298,7 +284,8 @@ const onSubmit = handleSubmit((values) => {
                     Spesialisasi / Fokus Klinis <span class="text-text-muted">(opsional)</span>
                   </FormLabel>
                   <FormControl>
-                    <Input v-bind="componentField" autocomplete="off" class="h-10 rounded-lg" placeholder="Konservasi Gigi" />
+                    <Input v-bind="componentField" autocomplete="off" class="h-10 rounded-lg"
+                      placeholder="Konservasi Gigi" />
                   </FormControl>
                   <FormMessage class="font-caption text-caption" />
                 </FormItem>
@@ -308,7 +295,8 @@ const onSubmit = handleSubmit((values) => {
                 <FormItem class="flex flex-col gap-1.5">
                   <FormLabel class="font-label-md text-label-md">Nomor STR / SIP</FormLabel>
                   <FormControl>
-                    <Input v-bind="componentField" autocomplete="off" class="h-10 rounded-lg font-mono" placeholder="STR-2024-0001" />
+                    <Input v-bind="componentField" autocomplete="off" class="h-10 rounded-lg font-mono"
+                      placeholder="STR-2024-0001" />
                   </FormControl>
                   <FormMessage class="font-caption text-caption" />
                 </FormItem>
@@ -328,7 +316,8 @@ const onSubmit = handleSubmit((values) => {
                 <FormItem class="flex flex-col gap-1.5">
                   <FormLabel class="font-label-md text-label-md">Hari Jaga</FormLabel>
                   <FormControl>
-                    <Input v-bind="componentField" autocomplete="off" class="h-10 rounded-lg" placeholder="Senin - Jumat" />
+                    <Input v-bind="componentField" autocomplete="off" class="h-10 rounded-lg"
+                      placeholder="Senin - Jumat" />
                   </FormControl>
                   <FormMessage class="font-caption text-caption" />
                 </FormItem>
@@ -338,7 +327,8 @@ const onSubmit = handleSubmit((values) => {
                 <FormItem class="flex flex-col gap-1.5">
                   <FormLabel class="font-label-md text-label-md">Jam / Shift Jaga</FormLabel>
                   <FormControl>
-                    <Input v-bind="componentField" autocomplete="off" class="h-10 rounded-lg" placeholder="08:00 - 16:00 (Shift Pagi)" />
+                    <Input v-bind="componentField" autocomplete="off" class="h-10 rounded-lg"
+                      placeholder="08:00 - 16:00 (Shift Pagi)" />
                   </FormControl>
                   <FormMessage class="font-caption text-caption" />
                 </FormItem>
@@ -347,12 +337,9 @@ const onSubmit = handleSubmit((values) => {
               <FormField v-slot="{ value, handleChange }" name="isPic" type="checkbox">
                 <FormItem class="flex items-center gap-space-sm rounded-lg bg-bg-canvas p-space-md sm:col-span-2">
                   <FormControl>
-                    <Checkbox
-                      id="worker-is-pic"
-                      :model-value="value"
+                    <Checkbox id="worker-is-pic" :model-value="value"
                       class="size-4 rounded border-strong data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
-                      @update:model-value="handleChange($event as boolean)"
-                    />
+                      @update:model-value="handleChange($event as boolean)" />
                   </FormControl>
                   <label for="worker-is-pic" class="flex flex-col cursor-pointer">
                     <span class="font-label-md text-label-md">Tunjuk sebagai PIC (Penanggung Jawab)</span>
@@ -369,7 +356,8 @@ const onSubmit = handleSubmit((values) => {
                 <FormItem class="flex flex-col gap-1.5">
                   <FormLabel class="font-label-md text-label-md">Nomor Telepon / WA</FormLabel>
                   <FormControl>
-                    <Input v-bind="componentField" type="tel" autocomplete="tel" class="h-10 rounded-lg font-mono" placeholder="081234567890" />
+                    <Input v-bind="componentField" type="tel" autocomplete="tel" class="h-10 rounded-lg font-mono"
+                      placeholder="081234567890" />
                   </FormControl>
                   <FormMessage class="font-caption text-caption" />
                 </FormItem>
@@ -379,7 +367,8 @@ const onSubmit = handleSubmit((values) => {
                 <FormItem class="flex flex-col gap-1.5">
                   <FormLabel class="font-label-md text-label-md">Email Klinis</FormLabel>
                   <FormControl>
-                    <Input v-bind="componentField" type="email" autocomplete="email" class="h-10 rounded-lg" placeholder="nama@klinik.co.id" />
+                    <Input v-bind="componentField" type="email" autocomplete="email" class="h-10 rounded-lg"
+                      placeholder="nama@klinik.co.id" />
                   </FormControl>
                   <FormMessage class="font-caption text-caption" />
                 </FormItem>
@@ -391,7 +380,8 @@ const onSubmit = handleSubmit((values) => {
                     Alamat Domisili <span class="text-text-muted">(opsional)</span>
                   </FormLabel>
                   <FormControl>
-                    <Textarea v-bind="componentField" rows="3" autocomplete="off" class="rounded-lg" placeholder="Alamat lengkap sesuai domisili" />
+                    <Textarea v-bind="componentField" rows="3" autocomplete="off" class="rounded-lg"
+                      placeholder="Alamat lengkap sesuai domisili" />
                   </FormControl>
                   <FormMessage class="font-caption text-caption" />
                 </FormItem>
@@ -403,7 +393,8 @@ const onSubmit = handleSubmit((values) => {
                 <FormItem class="flex flex-col gap-1.5">
                   <FormLabel class="font-label-md text-label-md">Username</FormLabel>
                   <FormControl>
-                    <Input v-bind="componentField" autocomplete="username" class="h-10 rounded-lg font-mono" placeholder="sarah.jenkins" />
+                    <Input v-bind="componentField" autocomplete="username" class="h-10 rounded-lg font-mono"
+                      placeholder="sarah.jenkins" />
                   </FormControl>
                   <FormMessage class="font-caption text-caption" />
                 </FormItem>
@@ -415,7 +406,8 @@ const onSubmit = handleSubmit((values) => {
                     {{ isEdit ? 'Password (kosongkan jika tidak diganti)' : 'Password Awal' }}
                   </FormLabel>
                   <FormControl>
-                    <Input v-bind="componentField" type="password" autocomplete="new-password" class="h-10 rounded-lg" :required="!isEdit" />
+                    <Input v-bind="componentField" type="password" autocomplete="new-password" class="h-10 rounded-lg"
+                      :required="!isEdit" />
                   </FormControl>
                   <FormMessage class="font-caption text-caption" />
                 </FormItem>
@@ -423,21 +415,15 @@ const onSubmit = handleSubmit((values) => {
 
               <FormField v-slot="{ componentField, errorMessage }" name="accessLevel">
                 <FormItem class="flex flex-col gap-1.5 sm:col-span-2">
-                  <Label
-                    for="worker-access-level"
-                    :class="['font-label-md text-label-md', errorMessage ? 'text-destructive' : '']"
-                  >
+                  <Label for="worker-access-level"
+                    :class="['font-label-md text-label-md', errorMessage ? 'text-destructive' : '']">
                     Level Hak Akses
                   </Label>
                   <FormControl>
                     <Select v-bind="componentField">
-                      <SelectTrigger
-                        id="worker-access-level"
-                        :aria-invalid="Boolean(errorMessage)"
-                        class="h-10 rounded-lg bg-background font-body-sm"
-                      >
+                      <SelectTrigger id="worker-access-level" :aria-invalid="Boolean(errorMessage)"
+                        class="h-10 rounded-lg bg-background font-body-sm">
                         <SelectValue placeholder="Pilih level akses" />
-                        <ChevronDown class="size-4 text-text-muted" aria-hidden="true" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem v-for="option in accessOptions" :key="option.value" :value="option.value">
@@ -454,14 +440,11 @@ const onSubmit = handleSubmit((values) => {
         </section>
 
         <div class="flex items-center justify-end gap-space-sm border-t border-border-subtle pt-space-md">
-          <Button type="button" variant="outline" class="rounded-lg font-label-md text-label-md" @click="open = false">
+          <Button type="button" variant="outline" class="font-label-md text-label-md" @click="open = false">
             Batal
           </Button>
-          <Button
-            type="submit"
-            class="flex items-center gap-2 rounded-lg font-label-md text-label-md"
-            :disabled="isPending"
-          >
+          <Button type="submit" class="flex items-center text-white gap-2 font-label-md text-label-md"
+            :disabled="isPending">
             <Check v-if="!isPending" class="size-4" aria-hidden="true" />
             <Save v-else class="size-4 animate-spin" aria-hidden="true" />
             {{ isEdit ? 'Simpan Perubahan' : 'Simpan Petugas' }}

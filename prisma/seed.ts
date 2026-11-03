@@ -190,6 +190,470 @@ const staff = [
   },
 ] as const
 
+type PatientVisitSeed = {
+  visitDate: Date
+  title: string
+  clinicianName: string
+  ohisScore: number | null
+}
+
+type PatientSeed = {
+  medicalRecordNo: string
+  nik: string
+  fullName: string
+  birthDate: Date
+  gender: 'L' | 'P'
+  bloodType: 'A' | 'B' | 'AB' | 'O' | null
+  phone: string
+  email: string | null
+  address: string
+  allergyAntibiotics: boolean
+  hypertension: boolean
+  diabetes: boolean
+  ohisScore: number | null
+  debrisIndex: number | null
+  calculusIndex: number | null
+  ohisCategory: 'baik' | 'sedang' | 'buruk' | null
+  healthyTeeth: number
+  odontogramNote: string | null
+  dmftScore: number | null
+  lastVisitAt: Date | null
+  nextVisitAt: Date | null
+  nextVisitClinician: string | null
+  controlTitle: string | null
+  controlNote: string | null
+  controlPriority: 'normal' | 'urgent'
+  visits: PatientVisitSeed[]
+}
+
+function tomorrowAt(hour: number, minute: number) {
+  const date = new Date()
+  date.setDate(date.getDate() + 1)
+  date.setHours(hour, minute, 0, 0)
+  return date
+}
+
+function upcomingAt(days: number, hour: number, minute: number) {
+  const date = new Date()
+  date.setDate(date.getDate() + days)
+  date.setHours(hour, minute, 0, 0)
+  return date
+}
+
+const mockPatients: PatientSeed[] = [
+  {
+    medicalRecordNo: 'RM-2025-0148',
+    nik: '32011458900123',
+    fullName: 'Dian Restiana',
+    birthDate: new Date(Date.UTC(1997, 2, 14)),
+    gender: 'P',
+    bloodType: 'B',
+    phone: '081234567890',
+    email: 'dian.restiana@mail.com',
+    address: 'Jl. Merpati No. 12, Kebayoran Baru, Jakarta Selatan',
+    allergyAntibiotics: false,
+    hypertension: false,
+    diabetes: false,
+    ohisScore: 0.8,
+    debrisIndex: 0.5,
+    calculusIndex: 0.3,
+    ohisCategory: 'baik',
+    healthyTeeth: 29,
+    odontogramNote: '2 Tambalan Komposit, 1 Sisa Akar (Gigi 46)',
+    dmftScore: 3,
+    lastVisitAt: new Date(Date.UTC(2025, 3, 10)),
+    nextVisitAt: tomorrowAt(9, 30),
+    nextVisitClinician: 'drg. Sarah Jenkins',
+    controlTitle: null,
+    controlNote: 'Kontrol Rutin OHI-S',
+    controlPriority: 'normal',
+    visits: [
+      {
+        visitDate: new Date(Date.UTC(2025, 3, 10)),
+        title: 'Evaluasi Oral Hygiene & Pembersihan Debris',
+        clinicianName: 'drg. Sarah Jenkins',
+        ohisScore: 0.8,
+      },
+      {
+        visitDate: new Date(Date.UTC(2025, 0, 15)),
+        title: 'Penambalan Gigi 36 (Resin Komposit)',
+        clinicianName: 'drg. Sarah Jenkins',
+        ohisScore: null,
+      },
+    ],
+  },
+  {
+    medicalRecordNo: 'RM-2025-0147',
+    nik: '3273012106830004',
+    fullName: 'Agus Wahyudi',
+    birthDate: new Date(Date.UTC(1983, 5, 21)),
+    gender: 'L',
+    bloodType: 'A',
+    phone: '081398765432',
+    email: 'agus.wahyudi@mail.com',
+    address: 'Jl. Anggrek No. 45, Bandung',
+    allergyAntibiotics: false,
+    hypertension: true,
+    diabetes: false,
+    ohisScore: 2.2,
+    debrisIndex: 1.4,
+    calculusIndex: 0.8,
+    ohisCategory: 'sedang',
+    healthyTeeth: 28,
+    odontogramNote: '1 Karies Aktif (Gigi 16), 2 Tambalan',
+    dmftScore: 4,
+    lastVisitAt: new Date(Date.UTC(2025, 4, 26)),
+    nextVisitAt: new Date(Date.UTC(2025, 4, 26)),
+    nextVisitClinician: 'drg. Raditya Pratama',
+    controlTitle: null,
+    controlNote: 'Jadwal Evaluasi Plak',
+    controlPriority: 'normal',
+    visits: [
+      {
+        visitDate: new Date(Date.UTC(2025, 4, 26)),
+        title: 'Evaluasi Plak & Skrining Kalkulus',
+        clinicianName: 'drg. Raditya Pratama',
+        ohisScore: 2.2,
+      },
+    ],
+  },
+  {
+    medicalRecordNo: 'RM-2025-0146',
+    nik: '3275054509960002',
+    fullName: 'Siti Rahmawati',
+    birthDate: new Date(Date.UTC(1996, 8, 5)),
+    gender: 'P',
+    bloodType: 'O',
+    phone: '085712345678',
+    email: 'siti.rahmawati@mail.com',
+    address: 'Jl. Melati Blok C5, Bekasi',
+    allergyAntibiotics: false,
+    hypertension: false,
+    diabetes: false,
+    ohisScore: 0.6,
+    debrisIndex: 0.4,
+    calculusIndex: 0.2,
+    ohisCategory: 'baik',
+    healthyTeeth: 31,
+    odontogramNote: '1 Tambalan Komposit (Gigi 26)',
+    dmftScore: 1,
+    lastVisitAt: new Date(Date.UTC(2025, 4, 23)),
+    nextVisitAt: new Date(Date.UTC(2025, 4, 23)),
+    nextVisitClinician: 'Ns. Dimas Setiawan',
+    controlTitle: null,
+    controlNote: 'Pemeriksaan Selesai',
+    controlPriority: 'normal',
+    visits: [
+      {
+        visitDate: new Date(Date.UTC(2025, 4, 23)),
+        title: 'Pemeriksaan Rutin & Pencatatan OHI-S',
+        clinicianName: 'Ns. Dimas Setiawan',
+        ohisScore: 0.6,
+      },
+    ],
+  },
+  {
+    medicalRecordNo: 'RM-2025-0145',
+    nik: '3171021211790001',
+    fullName: 'Hendra Pratama',
+    birthDate: new Date(Date.UTC(1979, 10, 12)),
+    gender: 'L',
+    bloodType: 'AB',
+    phone: '081122334455',
+    email: 'hendra.pratama@mail.com',
+    address: 'Jl. Diponegoro No. 88, Jakarta',
+    allergyAntibiotics: true,
+    hypertension: false,
+    diabetes: false,
+    ohisScore: 3.4,
+    debrisIndex: 1.9,
+    calculusIndex: 1.5,
+    ohisCategory: 'buruk',
+    healthyTeeth: 26,
+    odontogramNote: '1 Sisa Akar (Gigi 36), 3 Karies Aktif',
+    dmftScore: 6,
+    lastVisitAt: null,
+    nextVisitAt: null,
+    nextVisitClinician: null,
+    controlTitle: 'Jadwal Scaling',
+    controlNote: 'Perlu Penanganan Cepat',
+    controlPriority: 'urgent',
+    visits: [
+      {
+        visitDate: new Date(Date.UTC(2025, 4, 12)),
+        title: 'Skrining Kalkulus Berat & Rujukan Scaling',
+        clinicianName: 'drg. Raditya Pratama',
+        ohisScore: 3.4,
+      },
+    ],
+  },
+  {
+    medicalRecordNo: 'RM-2025-0144',
+    nik: '3671031802910003',
+    fullName: 'Budi Santoso',
+    birthDate: new Date(Date.UTC(1991, 1, 18)),
+    gender: 'L',
+    bloodType: 'O',
+    phone: '081299887766',
+    email: 'budi.santoso@mail.com',
+    address: 'Jl. Kenanga No. 14, Tangerang',
+    allergyAntibiotics: false,
+    hypertension: false,
+    diabetes: true,
+    ohisScore: 1.4,
+    debrisIndex: 0.9,
+    calculusIndex: 0.5,
+    ohisCategory: 'sedang',
+    healthyTeeth: 30,
+    odontogramNote: '2 Tambalan Komposit',
+    dmftScore: 2,
+    lastVisitAt: new Date(Date.UTC(2025, 4, 24)),
+    nextVisitAt: new Date(Date.UTC(2025, 4, 24)),
+    nextVisitClinician: 'drg. Sarah Jenkins',
+    controlTitle: null,
+    controlNote: 'Monitoring Pemulihan',
+    controlPriority: 'normal',
+    visits: [
+      {
+        visitDate: new Date(Date.UTC(2025, 4, 24)),
+        title: 'Monitoring Pemulihan Gusi & OHI-S',
+        clinicianName: 'drg. Sarah Jenkins',
+        ohisScore: 1.4,
+      },
+    ],
+  },
+  {
+    medicalRecordNo: 'RM-2025-0143',
+    nik: '3173024301030005',
+    fullName: 'Anita Lestari',
+    birthDate: new Date(Date.UTC(2003, 0, 3)),
+    gender: 'P',
+    bloodType: 'A',
+    phone: '087811223344',
+    email: 'anita.lestari@mail.com',
+    address: 'Jl. Cempaka Putih No. 9, Jakarta',
+    allergyAntibiotics: false,
+    hypertension: false,
+    diabetes: false,
+    ohisScore: 1.1,
+    debrisIndex: 0.7,
+    calculusIndex: 0.4,
+    ohisCategory: 'baik',
+    healthyTeeth: 32,
+    odontogramNote: 'Gigi Sehat Tanpa Tambalan',
+    dmftScore: 0,
+    lastVisitAt: new Date(Date.UTC(2025, 4, 22)),
+    nextVisitAt: new Date(Date.UTC(2025, 4, 22)),
+    nextVisitClinician: 'Ns. Ayu Kusuma Wardani',
+    controlTitle: null,
+    controlNote: 'Selesai Edukasi Flossing',
+    controlPriority: 'normal',
+    visits: [
+      {
+        visitDate: new Date(Date.UTC(2025, 4, 22)),
+        title: 'Edukasi Flossing & Pemeriksaan OHI-S',
+        clinicianName: 'Ns. Ayu Kusuma Wardani',
+        ohisScore: 1.1,
+      },
+    ],
+  },
+  {
+    medicalRecordNo: 'RM-2025-0142',
+    nik: '3276012907930006',
+    fullName: 'M. Syahrul',
+    birthDate: new Date(Date.UTC(1993, 6, 29)),
+    gender: 'L',
+    bloodType: 'B',
+    phone: '085677889900',
+    email: 'm.syahrul@mail.com',
+    address: 'Jl. Gatot Subroto No. 31, Depok',
+    allergyAntibiotics: false,
+    hypertension: false,
+    diabetes: false,
+    ohisScore: 1.8,
+    debrisIndex: 1.1,
+    calculusIndex: 0.7,
+    ohisCategory: 'sedang',
+    healthyTeeth: 29,
+    odontogramNote: '1 Tambalan, 1 Karies Awal (Gigi 47)',
+    dmftScore: 3,
+    lastVisitAt: new Date(Date.UTC(2025, 4, 27)),
+    nextVisitAt: new Date(Date.UTC(2025, 4, 27)),
+    nextVisitClinician: 'drg. Raditya Pratama',
+    controlTitle: null,
+    controlNote: 'Penilaian Kalkulus',
+    controlPriority: 'normal',
+    visits: [
+      {
+        visitDate: new Date(Date.UTC(2025, 4, 27)),
+        title: 'Penilaian Kalkulus & Debris Index',
+        clinicianName: 'drg. Raditya Pratama',
+        ohisScore: 1.8,
+      },
+    ],
+  },
+  {
+    medicalRecordNo: 'RM-2025-0141',
+    nik: '3271045510850007',
+    fullName: 'Ratna Dewi',
+    birthDate: new Date(Date.UTC(1985, 9, 15)),
+    gender: 'P',
+    bloodType: 'O',
+    phone: '081344556677',
+    email: 'ratna.dewi@mail.com',
+    address: 'Jl. Flamboyan No. 27, Bogor',
+    allergyAntibiotics: false,
+    hypertension: true,
+    diabetes: false,
+    ohisScore: 0.9,
+    debrisIndex: 0.5,
+    calculusIndex: 0.4,
+    ohisCategory: 'baik',
+    healthyTeeth: 30,
+    odontogramNote: '1 Tambalan Amalgam (Gigi 37)',
+    dmftScore: 2,
+    lastVisitAt: new Date(Date.UTC(2025, 4, 19)),
+    nextVisitAt: new Date(Date.UTC(2025, 4, 19)),
+    nextVisitClinician: 'drg. Sarah Jenkins',
+    controlTitle: null,
+    controlNote: 'Selesai Kontrol',
+    controlPriority: 'normal',
+    visits: [
+      {
+        visitDate: new Date(Date.UTC(2025, 4, 19)),
+        title: 'Kontrol Rutin & Evaluasi OHI-S',
+        clinicianName: 'drg. Sarah Jenkins',
+        ohisScore: 0.9,
+      },
+    ],
+  },
+]
+
+const firstNames = [
+  'Adi', 'Ayu', 'Bagas', 'Bella', 'Cahyo', 'Dian', 'Eka', 'Farah', 'Gilang', 'Hesti',
+  'Ilham', 'Jihan', 'Krisna', 'Lina', 'Mega', 'Nanda', 'Oki', 'Putri', 'Rafi', 'Sari',
+  'Teguh', 'Uma', 'Vino', 'Wulan', 'Yoga', 'Zahra', 'Arif', 'Bimo', 'Citra', 'Dimas',
+  'Erna', 'Fajar', 'Gita', 'Rizal', 'Intan',
+]
+const lastNames = ['Pratama', 'Wijaya', 'Saputra', 'Halim', 'Nugroho', 'Kusuma', 'Santoso']
+const streets = [
+  'Jl. Merdeka No. 10', 'Jl. Sudirman No. 22', 'Jl. Ahmad Yani No. 7', 'Jl. Pahlawan No. 18',
+  'Jl. Kartini No. 3', 'Jl. Gajah Mada No. 51', 'Jl. Beringin No. 9', 'Jl. Cendana No. 16',
+]
+const cities = ['Jakarta', 'Bandung', 'Bekasi', 'Tangerang', 'Depok', 'Bogor', 'Surabaya', 'Semarang']
+const controlNotes = [
+  'Kontrol Rutin OHI-S', 'Monitoring Pemulihan', 'Pemeriksaan Selesai',
+  'Penilaian Kalkulus', 'Selesai Kontrol',
+]
+const visitTitles = [
+  'Evaluasi Oral Hygiene & Pembersihan Debris',
+  'Penilaian Kalkulus & Debris Index',
+  'Pemeriksaan Rutin & Pencatatan OHI-S',
+  'Edukasi Menyikat Gigi & Flossing',
+  'Skrining Karies Awal',
+]
+const clinicians = [
+  'drg. Sarah Jenkins', 'drg. Raditya Pratama', 'drg. Maya Anindita',
+  'Ns. Dimas Setiawan', 'Ns. Ayu Kusuma Wardani',
+]
+const odontogramNotes = [
+  'Gigi Sehat Tanpa Tambalan',
+  '1 Tambalan Komposit',
+  '2 Tambalan Komposit, 1 Karies Awal',
+  '1 Karies Awal (Gigi 26)',
+  '1 Sisa Akar (Gigi 46)',
+]
+
+function ohisCategoryOf(score: number): 'baik' | 'sedang' | 'buruk' {
+  if (score <= 1.2)
+    return 'baik'
+  if (score <= 3)
+    return 'sedang'
+  return 'buruk'
+}
+
+function buildGeneratedPatients(total: number): PatientSeed[] {
+  return Array.from({ length: total }, (_, index) => {
+    const recordNumber = index + 1
+    const year = 1958 + ((index * 7) % 48)
+    const month = index % 12
+    const day = (index % 27) + 1
+    const score = Math.round((0.3 + ((index * 37) % 480) / 100) * 10) / 10
+    const debris = Math.round(score * 6) / 10
+    const calculus = Math.round((score - debris) * 10) / 10
+    const urgent = index % 11 === 5
+    const lastVisitAt = urgent ? null : new Date(Date.UTC(2025, 4, (index % 28) + 1))
+    const visits: PatientVisitSeed[] = [
+      {
+        visitDate: new Date(Date.UTC(2025, 4, (index % 27) + 1)),
+        title: visitTitles[index % visitTitles.length]!,
+        clinicianName: clinicians[index % clinicians.length]!,
+        ohisScore: score,
+      },
+    ]
+    if (index % 4 === 0) {
+      visits.push({
+        visitDate: new Date(Date.UTC(2024, 10, (index % 25) + 1)),
+        title: 'Pemeriksaan Awal & Pencatatan OHI-S',
+        clinicianName: clinicians[(index + 2) % clinicians.length]!,
+        ohisScore: Math.round(Math.min(score + 0.6, 5.5) * 10) / 10,
+      })
+    }
+
+    return {
+      medicalRecordNo: `RM-2025-${String(recordNumber).padStart(4, '0')}`,
+      nik: `327102${String(day).padStart(2, '0')}${String(month + 1).padStart(2, '0')}${String(year).slice(-2)}${String(recordNumber).padStart(4, '0')}`,
+      fullName: `${firstNames[index % firstNames.length]} ${lastNames[Math.floor(index / firstNames.length) % lastNames.length]}`,
+      birthDate: new Date(Date.UTC(year, month, day)),
+      gender: index % 2 === 0 ? 'P' : 'L',
+      bloodType: (['A', 'B', 'AB', 'O'] as const)[index % 4]!,
+      phone: `08${String(1200000000 + index * 7919).slice(-10)}`,
+      email: `pasien${recordNumber}@mail.com`,
+      address: `${streets[index % streets.length]}, ${cities[index % cities.length]}`,
+      allergyAntibiotics: index % 13 === 0,
+      hypertension: index % 9 === 0,
+      diabetes: index % 17 === 0,
+      ohisScore: score,
+      debrisIndex: Math.min(debris, 3),
+      calculusIndex: Math.max(calculus, 0),
+      ohisCategory: ohisCategoryOf(score),
+      healthyTeeth: 32 - (index % 9),
+      odontogramNote: odontogramNotes[index % odontogramNotes.length]!,
+      dmftScore: index % 7,
+      lastVisitAt,
+      nextVisitAt: urgent ? null : upcomingAt(index % 45, 8 + (index % 9), (index % 2) * 30),
+      nextVisitClinician: urgent ? null : clinicians[index % clinicians.length]!,
+      controlTitle: urgent ? 'Jadwal Scaling' : null,
+      controlNote: urgent ? 'Perlu Penanganan Cepat' : controlNotes[index % controlNotes.length]!,
+      controlPriority: urgent ? 'urgent' : 'normal',
+      visits,
+    }
+  })
+}
+
+async function seedPatients() {
+  const patients = [...mockPatients, ...buildGeneratedPatients(140)]
+  let visitCount = 0
+
+  for (const patient of patients) {
+    const { visits, ...record } = patient
+    const saved = await prisma.patient.upsert({
+      where: { medicalRecordNo: record.medicalRecordNo },
+      update: record,
+      create: record,
+    })
+    await prisma.patientVisit.deleteMany({ where: { patientId: saved.id } })
+    if (visits.length > 0) {
+      await prisma.patientVisit.createMany({
+        data: visits.map(visit => ({ ...visit, patientId: saved.id })),
+      })
+      visitCount += visits.length
+    }
+  }
+
+  console.log(`Seeded ${patients.length} patients and ${visitCount} visits`)
+}
+
 async function main() {
   await prisma.$transaction(
     staff.map((worker) =>
@@ -201,6 +665,7 @@ async function main() {
     ),
   )
   console.log(`Seeded ${staff.length} health workers`)
+  await seedPatients()
 }
 
 main()

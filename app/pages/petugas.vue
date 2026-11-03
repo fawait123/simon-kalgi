@@ -94,47 +94,27 @@ function resetFilters() {
         </p>
       </div>
 
-      <Button
-        type="button"
-        class="flex shrink-0 items-center gap-2 self-start rounded-lg px-4 py-2 font-label-md text-label-md shadow-sm active:scale-[0.98] lg:self-auto"
-        @click="openCreate"
-      >
-        <UserPlus class="size-[18px]" aria-hidden="true" />
+      <Button type="button"
+        class="flex shrink-0 items-center gap-2 self-start font-label-md text-label-md shadow-sm active:scale-[0.98] lg:self-auto"
+        @click="openCreate">
+        <UserPlus class="size-4.5" aria-hidden="true" />
         Tambah Petugas
       </Button>
     </div>
 
     <HealthWorkerStatsCards :stats="stats" :is-pending="statsQuery.isPending.value" />
 
-    <HealthWorkerFilterToolbar
-      v-model:search="search"
-      v-model:role="role"
-      v-model:status="status"
-      @reset="resetFilters"
-    />
+    <HealthWorkerFilterToolbar v-model:search="search" v-model:role="role" v-model:status="status"
+      @reset="resetFilters" />
 
     <div class="flex flex-col rounded-xl bg-surface-card shadow-sm">
-      <HealthWorkerTable
-        :rows="rows"
-        :page="meta.page"
-        :page-size="meta.pageSize"
-        :is-pending="workersQuery.isPending.value"
-        :is-error="workersQuery.isError.value"
-        :error-text="errorText"
-        @view="openDetail"
-        @edit="openEdit"
-        @remove="openDelete"
-        @retry="() => workersQuery.refetch()"
-      />
+      <HealthWorkerTable :rows="rows" :page="meta.page" :page-size="meta.pageSize"
+        :is-pending="workersQuery.isPending.value" :is-error="workersQuery.isError.value" :error-text="errorText"
+        @view="openDetail" @edit="openEdit" @remove="openDelete" @retry="() => workersQuery.refetch()" />
       <template v-if="!workersQuery.isError.value">
         <Separator class="bg-border-subtle" />
-        <HealthWorkerPagination
-          :page="meta.page"
-          :page-size="meta.pageSize"
-          :total="meta.total"
-          :is-pending="workersQuery.isPending.value"
-          @update:page="page = $event"
-        />
+        <HealthWorkerPagination :page="meta.page" :page-size="meta.pageSize" :total="meta.total"
+          :is-pending="workersQuery.isPending.value" @update:page="page = $event" />
       </template>
     </div>
 

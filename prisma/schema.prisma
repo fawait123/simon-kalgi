@@ -37,6 +37,24 @@ enum AccessLevel {
   admin
 }
 
+enum BloodType {
+  A
+  B
+  AB
+  O
+}
+
+enum OhisCategory {
+  baik
+  sedang
+  buruk
+}
+
+enum ControlPriority {
+  normal
+  urgent
+}
+
 model HealthWorker {
   id               String           @id @default(uuid()) @db.Uuid
   medicalId        String           @unique @map("medical_id") @db.VarChar(15)
@@ -67,4 +85,58 @@ model HealthWorker {
   @@index([status])
   @@index([strNumber])
   @@map("health_workers")
+}
+
+model Patient {
+  id                 String          @id @default(uuid()) @db.Uuid
+  medicalRecordNo    String          @unique @map("medical_record_no") @db.VarChar(15)
+  nik                String          @unique @db.Char(16)
+  fullName           String          @map("full_name") @db.VarChar(120)
+  birthDate          DateTime        @map("birth_date") @db.Date
+  gender             Gender
+  bloodType          BloodType?      @map("blood_type")
+  phone              String          @db.VarChar(20)
+  email              String?         @unique @db.VarChar(120)
+  address            String          @db.VarChar(255)
+  allergyAntibiotics Boolean         @default(false) @map("allergy_antibiotics")
+  hypertension       Boolean         @default(false)
+  diabetes           Boolean         @default(false)
+  ohisScore          Float?          @map("ohis_score")
+  debrisIndex        Float?          @map("debris_index")
+  calculusIndex      Float?          @map("calculus_index")
+  ohisCategory       OhisCategory?   @map("ohis_category")
+  healthyTeeth       Int             @default(0) @map("healthy_teeth")
+  odontogramNote     String?         @map("odontogram_note") @db.VarChar(200)
+  dmftScore          Int?            @map("dmft_score")
+  lastVisitAt        DateTime?       @map("last_visit_at") @db.Date
+  nextVisitAt        DateTime?       @map("next_visit_at")
+  nextVisitClinician String?         @map("next_visit_clinician") @db.VarChar(120)
+  controlTitle       String?         @map("control_title") @db.VarChar(80)
+  controlNote        String?         @map("control_note") @db.VarChar(120)
+  controlPriority    ControlPriority @default(normal) @map("control_priority")
+  createdAt          DateTime        @default(now()) @map("created_at")
+  updatedAt          DateTime        @updatedAt @map("updated_at")
+
+  visits PatientVisit[]
+
+  @@index([gender])
+  @@index([ohisCategory])
+  @@index([fullName])
+  @@map("patients")
+}
+
+model PatientVisit {
+  id            String   @id @default(uuid()) @db.Uuid
+  patientId     String   @map("patient_id") @db.Uuid
+  visitDate     DateTime @map("visit_date") @db.Date
+  title         String   @db.VarChar(160)
+  clinicianName String   @map("clinician_name") @db.VarChar(120)
+  ohisScore     Float?   @map("ohis_score")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@index([patientId, visitDate])
+  @@map("patient_visits")
 }

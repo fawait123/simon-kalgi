@@ -68,7 +68,7 @@ const statusTone = computed(() => {
 
 <template>
   <Dialog v-model:open="open">
-    <DialogContent v-if="worker" class="max-w-3xl gap-0 overflow-hidden rounded-xl p-0">
+    <DialogContent v-if="worker" class="max-w-[70vw] min-w-[35vw] gap-0 overflow-hidden rounded-xl p-0">
       <div class="flex items-start gap-space-md bg-primary-surface px-space-xl py-space-lg">
         <Avatar class="size-14 shrink-0">
           <AvatarImage v-if="worker.avatarUrl" :src="worker.avatarUrl" :alt="worker.fullName" />
@@ -138,10 +138,7 @@ const statusTone = computed(() => {
           </div>
         </div>
 
-        <p
-          class="flex items-center gap-2 rounded-lg px-space-md py-2 font-label-md text-label-md"
-          :class="statusTone"
-        >
+        <p class="flex items-center gap-2 rounded-lg px-space-md py-2 font-label-md text-label-md" :class="statusTone">
           <CircleCheck class="size-4" aria-hidden="true" />
           Verifikasi profil: {{ statusLabel[worker.status] }}
           <span v-if="worker.isPic" class="ml-auto">Penanggung jawab modul monitoring</span>
