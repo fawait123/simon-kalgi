@@ -654,6 +654,142 @@ async function seedPatients() {
   console.log(`Seeded ${patients.length} patients and ${visitCount} visits`)
 }
 
+const examinationSeed = {
+  medicalRecordNo: 'RM-2025-0147',
+  examinerMedicalId: 'DC-DOC-002',
+  chiefComplaint:
+    'Gusi sering berdarah saat menyikat gigi dan ngilu pada gigi posterior kanan atas saat minum dingin.',
+  gingivaCondition: 'Gingivitis Marginal, edema ringan, BOP (Bleeding on Probing) (+)',
+  mucosaCondition: 'Normal, Tidak ada lesi',
+  prescriptionNote: 'Klorheksidin 0.12% bilas 2x1 sehari selama 7 hari.',
+  hygieneDiagnosis:
+    'Kalkulus derajat sedang dengan gingivitis lokal. Diindikasikan scaling & root planing serta profilaksis dental.',
+  planOfAction: [
+    'Scaling & Root Planing Rahang Atas & Bawah (Kode: DT-04)',
+    'Edukasi Teknik Menyikat Gigi (Bass Technique & Dental Floss)',
+  ],
+  nextVisitNote: 'Evaluasi hasil scaling dan kontrol karies gigi 16.',
+  teeth: [
+    { fdiNumber: 16, condition: 'karies' as const, note: 'Karies klas I oklusal, rencana restorasi komposit' },
+    { fdiNumber: 11, condition: 'tambalan' as const, note: 'Restorasi komposit servikal' },
+    { fdiNumber: 36, condition: 'tambalan' as const, note: 'Restorasi amalgam stabil' },
+    { fdiNumber: 48, condition: 'hilang' as const, note: 'Ekstraksi tahun 2023' },
+  ],
+  indexScores: [
+    { fdiNumber: 16, surface: 'buccal' as const, debrisValue: 2, calculusValue: 2 },
+    { fdiNumber: 11, surface: 'labial' as const, debrisValue: 1, calculusValue: 0 },
+    { fdiNumber: 26, surface: 'buccal' as const, debrisValue: 1, calculusValue: 1 },
+    { fdiNumber: 36, surface: 'lingual' as const, debrisValue: 2, calculusValue: 1 },
+    { fdiNumber: 31, surface: 'labial' as const, debrisValue: 1, calculusValue: 0 },
+    { fdiNumber: 46, surface: 'lingual' as const, debrisValue: 1, calculusValue: 1 },
+  ],
+}
+
+function daysFromNow(days: number) {
+  const date = new Date()
+  date.setUTCHours(0, 0, 0, 0)
+  date.setUTCDate(date.getUTCDate() + days)
+  return date
+}
+
+async function seedExamination() {
+  const patient = await prisma.patient.findUnique({
+    where: { medicalRecordNo: examinationSeed.medicalRecordNo },
+    select: { id: true, fullName: true },
+  })
+  const examiner = await prisma.healthWorker.findUnique({
+    where: { medicalId: examinationSeed.examinerMedicalId },
+    select: { id: true, fullName: true, medicalId: true },
+  })
+  if (!patient || !examiner) {
+    console.warn('Skip examination seed: patient or examiner not found')
+    return
+  }
+
+  const debrisSum = examinationSeed.indexScores.reduce((total, row) => total + row.debrisValue, 0)
+  const calculusSum = examinationSeed.indexScores.reduce((total, row) => total + row.calculusValue, 0)
+  const debrisIndex = Math.round((debrisSum / 6) * 100) / 100
+  const calculusIndex = Math.round((calculusSum / 6) * 100) / 100
+  const ohisScore = Math.round((debrisIndex + calculusIndex) * 100) / 100
+  const examDate = daysFromNow(-7)
+  const nextVisitAt = daysFromNow(7)
+  const allFdi = [
+    ...[18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28],
+    ...[48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38],
+  ]
+  const abnormal = new Map(examinationSeed.teeth.map(tooth => [tooth.fdiNumber, tooth]))
+  const healthyTeeth = allFdi.length - abnormal.size
+  const dmftScore = examinationSeed.teeth.filter(tooth => tooth.condition !== 'mahkota').length
+
+  await prisma.examination.deleteMany({ where: { patientId: patient.id } })
+  await prisma.examination.create({
+    data: {
+      patientId: patient.id,
+      examinerId: examiner.id,
+      examinerName: examiner.fullName,
+      examDate,
+      chiefComplaint: examinationSeed.chiefComplaint,
+      bloodPressure: '128/82',
+      heartRate: 78,
+      heartRhythm: 'reguler',
+      gingivaCondition: examinationSeed.gingivaCondition,
+      mobilityDegree: 0,
+      mucosaCondition: examinationSeed.mucosaCondition,
+      prescriptionNote: examinationSeed.prescriptionNote,
+      hygieneDiagnosis: examinationSeed.hygieneDiagnosis,
+      planOfAction: examinationSeed.planOfAction,
+      debrisIndex,
+      calculusIndex,
+      ohisScore,
+      ohisCategory: ohisCategoryOf(ohisScore),
+      healthyTeeth,
+      dmftScore,
+      status: 'final',
+      nextVisitAt,
+      nextVisitNote: examinationSeed.nextVisitNote,
+      teeth: {
+        create: allFdi.map(fdiNumber => ({
+          fdiNumber,
+          condition: abnormal.get(fdiNumber)?.condition ?? 'sehat',
+          note: abnormal.get(fdiNumber)?.note ?? null,
+        })),
+      },
+      indexScores: { create: examinationSeed.indexScores.map(row => ({ ...row })) },
+    },
+  })
+
+  await prisma.patient.update({
+    where: { id: patient.id },
+    data: {
+      ohisScore,
+      debrisIndex,
+      calculusIndex,
+      ohisCategory: ohisCategoryOf(ohisScore),
+      healthyTeeth,
+      dmftScore,
+      odontogramNote: `${examinationSeed.teeth.map(tooth => `${tooth.fdiNumber} ${tooth.condition}`).join(', ')} · OHI-S ${ohisScore.toFixed(2)}`.slice(0, 200),
+      lastVisitAt: examDate,
+      nextVisitAt,
+      nextVisitClinician: examiner.fullName,
+      controlTitle: 'Kontrol Hasil Pemeriksaan',
+      controlNote: examinationSeed.nextVisitNote.slice(0, 120),
+      controlPriority: ohisCategoryOf(ohisScore) === 'buruk' ? 'urgent' : 'normal',
+    },
+  })
+
+  await prisma.patientVisit.create({
+    data: {
+      patientId: patient.id,
+      visitDate: examDate,
+      title: 'Pemeriksaan Gigi & Mulut',
+      clinicianName: examiner.fullName,
+      ohisScore,
+    },
+  })
+
+  console.log(`Seeded examination for ${patient.fullName} (OHI-S ${ohisScore.toFixed(2)})`)
+}
+
 async function main() {
   await prisma.$transaction(
     staff.map((worker) =>
@@ -666,6 +802,7 @@ async function main() {
   )
   console.log(`Seeded ${staff.length} health workers`)
   await seedPatients()
+  await seedExamination()
 }
 
 main()

@@ -1,3 +1,4 @@
+import type { ExaminationListQuery } from '~~/shared/schemas/examination.schema'
 import type { HealthWorkerListQuery } from '~~/shared/schemas/health-worker.schema'
 import type { PatientListQuery } from '~~/shared/schemas/patient.schema'
 
@@ -17,4 +18,14 @@ export const patientKeys = {
   details: () => [...patientKeys.all, 'detail'] as const,
   detail: (id: string) => [...patientKeys.details(), id] as const,
   nextRecordNo: () => [...patientKeys.all, 'next-record-no'] as const,
+}
+
+export const examinationKeys = {
+  all: ['examinations'] as const,
+  lists: () => [...examinationKeys.all, 'list'] as const,
+  list: (params: ExaminationListQuery) => [...examinationKeys.lists(), params] as const,
+  details: () => [...examinationKeys.all, 'detail'] as const,
+  detail: (id: string) => [...examinationKeys.details(), id] as const,
+  latest: () => [...examinationKeys.all, 'latest'] as const,
+  latestFor: (patientId: string) => [...examinationKeys.latest(), patientId] as const,
 }

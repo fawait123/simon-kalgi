@@ -55,6 +55,31 @@ enum ControlPriority {
   urgent
 }
 
+enum ToothCondition {
+  sehat
+  karies
+  tambalan
+  mahkota
+  hilang
+}
+
+enum IndexSurface {
+  buccal
+  labial
+  lingual
+  palatal
+}
+
+enum HeartRhythm {
+  reguler
+  tidak_reguler
+}
+
+enum ExaminationStatus {
+  draft
+  final
+}
+
 model HealthWorker {
   id               String           @id @default(uuid()) @db.Uuid
   medicalId        String           @unique @map("medical_id") @db.VarChar(15)
@@ -81,10 +106,81 @@ model HealthWorker {
   createdAt        DateTime         @default(now()) @map("created_at")
   updatedAt        DateTime         @updatedAt @map("updated_at")
 
+  examinations Examination[]
+
   @@index([role])
   @@index([status])
   @@index([strNumber])
   @@map("health_workers")
+}
+
+model Examination {
+  id               String            @id @default(uuid()) @db.Uuid
+  patientId        String            @map("patient_id") @db.Uuid
+  examinerId       String?           @map("examiner_id") @db.Uuid
+  examinerName     String            @map("examiner_name") @db.VarChar(120)
+  examDate         DateTime          @map("exam_date") @db.Date
+  chiefComplaint   String            @map("chief_complaint") @db.VarChar(600)
+  bloodPressure    String?           @map("blood_pressure") @db.VarChar(20)
+  heartRate        Int?              @map("heart_rate")
+  heartRhythm      HeartRhythm       @default(reguler)
+  gingivaCondition String            @map("gingiva_condition") @db.VarChar(255)
+  mobilityDegree   Int               @default(0) @map("mobility_degree")
+  mucosaCondition  String            @map("mucosa_condition") @db.VarChar(120)
+  prescriptionNote String?           @map("prescription_note") @db.VarChar(600)
+  hygieneDiagnosis String?           @map("hygiene_diagnosis") @db.VarChar(600)
+  planOfAction     String[]          @map("plan_of_action")
+  debrisIndex      Float             @default(0) @map("debris_index")
+  calculusIndex    Float             @default(0) @map("calculus_index")
+  ohisScore        Float             @default(0) @map("ohis_score")
+  ohisCategory     OhisCategory      @default(baik) @map("ohis_category")
+  healthyTeeth     Int               @default(0) @map("healthy_teeth")
+  dmftScore        Int               @default(0) @map("dmft_score")
+  status           ExaminationStatus @default(draft)
+  nextVisitAt      DateTime?         @map("next_visit_at")
+  nextVisitNote    String?           @map("next_visit_note") @db.VarChar(200)
+  createdAt        DateTime          @default(now()) @map("created_at")
+  updatedAt        DateTime          @updatedAt @map("updated_at")
+
+  patient     Patient                 @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  examiner    HealthWorker?           @relation(fields: [examinerId], references: [id], onDelete: SetNull)
+  teeth       ExaminationTooth[]
+  indexScores ExaminationIndexScore[]
+
+  @@index([patientId, examDate])
+  @@index([status])
+  @@map("examinations")
+}
+
+model ExaminationTooth {
+  id            String         @id @default(uuid()) @db.Uuid
+  examinationId String         @map("examination_id") @db.Uuid
+  fdiNumber     Int            @map("fdi_number")
+  condition     ToothCondition @default(sehat)
+  note          String?        @db.VarChar(120)
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+
+  examination Examination @relation(fields: [examinationId], references: [id], onDelete: Cascade)
+
+  @@unique([examinationId, fdiNumber])
+  @@map("examination_teeth")
+}
+
+model ExaminationIndexScore {
+  id            String       @id @default(uuid()) @db.Uuid
+  examinationId String       @map("examination_id") @db.Uuid
+  fdiNumber     Int          @map("fdi_number")
+  surface       IndexSurface
+  debrisValue   Int          @default(0) @map("debris_value")
+  calculusValue Int          @default(0) @map("calculus_value")
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+
+  examination Examination @relation(fields: [examinationId], references: [id], onDelete: Cascade)
+
+  @@unique([examinationId, fdiNumber])
+  @@map("examination_index_scores")
 }
 
 model Patient {
@@ -117,7 +213,8 @@ model Patient {
   createdAt          DateTime        @default(now()) @map("created_at")
   updatedAt          DateTime        @updatedAt @map("updated_at")
 
-  visits PatientVisit[]
+  visits      PatientVisit[]
+  examinations Examination[]
 
   @@index([gender])
   @@index([ohisCategory])

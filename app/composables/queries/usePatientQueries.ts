@@ -20,10 +20,11 @@ function errorMessage(error: unknown, fallback: string) {
   return message ?? fallback
 }
 
-export function usePatientsQuery(params: () => PatientListQuery) {
+export function usePatientsQuery(params: () => PatientListQuery, enabled?: () => boolean) {
   return useQuery({
     queryKey: computed(() => patientKeys.list(params())),
     queryFn: () => $fetch<PatientListResponse>('/api/patients', { query: params() }),
+    enabled: computed(() => (enabled ? enabled() : true)),
   })
 }
 

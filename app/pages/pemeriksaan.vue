@@ -1,13 +1,20 @@
 <script setup lang="ts">
-import { Smile } from 'lucide-vue-next'
-
 definePageMeta({ layout: 'admin', title: 'Pemeriksaan Gigi & Mulut' })
+
+const draft = provideExaminationDraft()
+
+onMounted(() => {
+  draft.autosaveEnabled.value = true
+})
 </script>
 
 <template>
-  <CommonPagePlaceholder
-    title="Pemeriksaan Gigi & Mulut"
-    description="Pencatatan hasil pemeriksaan klinis gigi dan mulut per pasien lengkap dengan odontogram."
-    :icon="Smile"
-  />
+  <div class="mx-auto flex w-full max-w-[1600px] flex-col gap-space-lg p-space-lg lg:p-space-xl">
+    <ExaminationIntroCard />
+    <ExaminationPatientSection />
+    <ExaminationOdontogram />
+    <ExaminationOhisSection />
+    <ExaminationSoftTissueSection />
+    <ExaminationActionBar />
+  </div>
 </template>
