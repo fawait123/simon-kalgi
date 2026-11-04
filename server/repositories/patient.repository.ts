@@ -51,6 +51,46 @@ export const patientAuthSelect = {
   passwordHash: true,
 } satisfies Prisma.PatientSelect
 
+/** Kolom yang dibutuhkan halaman Profil Saya; field klinis milik klinik ikut ditampilkan read-only. */
+export const patientProfileSelect = {
+  id: true,
+  medicalRecordNo: true,
+  fullName: true,
+  nik: true,
+  birthDate: true,
+  birthPlace: true,
+  gender: true,
+  bloodType: true,
+  phone: true,
+  email: true,
+  address: true,
+  occupation: true,
+  avatarUrl: true,
+  allergyAntibiotics: true,
+  hypertension: true,
+  diabetes: true,
+  ohisScore: true,
+  ohisCategory: true,
+  healthyTeeth: true,
+  odontogramNote: true,
+  lastVisitAt: true,
+  nextVisitAt: true,
+  nextVisitClinician: true,
+  controlTitle: true,
+  controlPriority: true,
+  emergencyName: true,
+  emergencyRelation: true,
+  emergencyPhone: true,
+  emergencyEmail: true,
+  emergencyAddress: true,
+  insuranceType: true,
+  insurancePolicyNo: true,
+  insuranceClass: true,
+  insuranceValidUntil: true,
+  passwordHash: true,
+  updatedAt: true,
+} satisfies Prisma.PatientSelect
+
 export const patientSessionSelect = {
   id: true,
   medicalRecordNo: true,
@@ -121,6 +161,30 @@ export const patientRepository = {
 
   findSessionUser(id: string, client: DBClient = prisma) {
     return client.patient.findUnique({ where: { id }, select: patientSessionSelect })
+  },
+
+  findProfile(id: string) {
+    return prisma.patient.findUnique({ where: { id }, select: patientProfileSelect })
+  },
+
+  updateProfile(id: string, data: Prisma.PatientUpdateInput) {
+    return prisma.patient.update({ where: { id }, data, select: patientProfileSelect })
+  },
+
+  countVisits(id: string) {
+    return prisma.patientVisit.count({ where: { patientId: id } })
+  },
+
+  findForPasswordChange(id: string) {
+    return prisma.patient.findUnique({ where: { id }, select: { id: true, passwordHash: true } })
+  },
+
+  updatePasswordHash(id: string, passwordHash: string) {
+    return prisma.patient.update({
+      where: { id },
+      data: { passwordHash },
+      select: { id: true, updatedAt: true },
+    })
   },
 
   create(data: Prisma.PatientCreateInput, client: DBClient = prisma) {

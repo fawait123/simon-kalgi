@@ -1,17 +1,23 @@
 <script setup lang="ts">
-import { Bell, LayoutGrid, ListChecks, LogOut, Smile } from 'lucide-vue-next'
+import { Bell, LayoutGrid, ListChecks, LogOut, Smile, Stethoscope, UserRound } from 'lucide-vue-next'
 import { isRouteAllowed } from '~~/shared/config/access'
 import { useLogoutMutation } from '~/composables/queries/useAuthQueries'
 import { usePatientNotificationStatsQuery } from '~/composables/queries/usePatientNotificationQueries'
 
 const mainNav = [
   { to: '/pasien/dashboard', label: 'Dashboard', icon: LayoutGrid },
+  { to: '/pasien/profil', label: 'Profil Saya', icon: UserRound },
   { to: '/pasien/kepatuhan', label: 'Checklist Kepatuhan', icon: ListChecks },
-  { to: '/pasien/notifikasi', label: 'Notifikasi', icon: Bell },
+  { to: '/pasien/pemeriksaan', label: 'Pemeriksaan Gigi', icon: Stethoscope },
 ]
+
+const systemNav = [
+  { to: '/pasien/notifikasi', label: 'Notifikasi', icon: Bell },
+];
 
 const { user } = useAuthSession()
 const visibleMainNav = computed(() => mainNav.filter(item => isRouteAllowed(item.to, user.value)))
+const visibleSystemNav = computed(() => systemNav.filter(item => isRouteAllowed(item.to, user.value)))
 
 const statsQuery = usePatientNotificationStatsQuery()
 const unreadBadge = computed(() => {
@@ -45,26 +51,22 @@ const logoutMutation = useLogoutMutation()
       </p>
       <nav class="flex flex-col gap-1 px-space-sm">
         <LayoutAdminNavItem
-          v-for="item in visibleMainNav"
-          :key="item.to"
-          :to="item.to"
-          :label="item.label"
-          :icon="item.icon"
-          :badge="item.to === '/pasien/notifikasi' ? unreadBadge : undefined"
-        />
+v-for="item in visibleMainNav" :key="item.to" :to="item.to" :label="item.label"
+          :icon="item.icon" :badge="item.to === '/pasien/notifikasi' ? unreadBadge : undefined" />
       </nav>
 
       <p
         class="px-space-md pb-space-sm pt-space-lg font-table-header text-table-header px-space-md uppercase tracking-wider text-text-muted">
-        Akun
+        Sistem
       </p>
       <nav class="flex flex-col gap-1 px-space-sm">
+        <LayoutAdminNavItem
+v-for="item in visibleSystemNav" :key="item.to" :to="item.to" :label="item.label"
+          :icon="item.icon" :badge="item.to === '/pasien/notifikasi' ? unreadBadge : undefined" />
         <button
-          type="button"
+type="button"
           class="flex items-center gap-space-sm rounded-lg px-space-md py-2.5 text-left font-body-md text-body-md text-status-danger transition-colors hover:bg-status-danger-bg"
-          :disabled="logoutMutation.isPending.value"
-          @click="logoutMutation.mutate()"
-        >
+          :disabled="logoutMutation.isPending.value" @click="logoutMutation.mutate()">
           <LogOut class="size-[18px] shrink-0" aria-hidden="true" />
           <span>{{ logoutMutation.isPending.value ? 'Keluar...' : 'Keluar' }}</span>
         </button>

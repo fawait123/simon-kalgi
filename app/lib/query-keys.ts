@@ -67,6 +67,20 @@ export const patientCareKeys = {
   checklist: () => [...patientCareKeys.all, 'checklist'] as const,
 }
 
+export const patientProfileKeys = {
+  all: ['patient-profile'] as const,
+  profile: () => [...patientProfileKeys.all, 'profile'] as const,
+}
+
+// Root-nya sengaja tidak dinest di bawah patientCareKeys: invalidasi setelah centang tugas
+// checklist tidak boleh ikut menarik ulang riwayat pemeriksaan yang murni baca-saja.
+export const patientRecordKeys = {
+  all: ['patient-record'] as const,
+  sessions: () => [...patientRecordKeys.all, 'sessions'] as const,
+  details: () => [...patientRecordKeys.all, 'detail'] as const,
+  detail: (id: string) => [...patientRecordKeys.details(), id] as const,
+}
+
 // Root-nya sengaja tidak dinest di bawah patientCareKeys: invalidasi setelah centang checklist
 // akan ikut menarik ulang feed notifikasi bila keduanya berbagi prefix.
 export const patientNotificationKeys = {
