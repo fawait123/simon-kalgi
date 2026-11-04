@@ -2,6 +2,7 @@
 import {
   BadgeCheck,
   Bell,
+  FolderHeart,
   HeartPulse,
   LayoutGrid,
   LogOut,
@@ -17,6 +18,7 @@ const mainNav = [
   { to: '/pasien', label: 'Data Pasien', icon: Users },
   { to: '/petugas', label: 'Data Petugas Kesehatan', icon: BadgeCheck },
   { to: '/pemeriksaan', label: 'Pemeriksaan Gigi & Mulut', icon: Smile },
+  { to: '/rekam-pemeriksaan', label: 'Seluruh Rekam Pasien', icon: FolderHeart },
   { to: '/monitoring', label: 'Monitoring Pasien', icon: HeartPulse },
 ]
 

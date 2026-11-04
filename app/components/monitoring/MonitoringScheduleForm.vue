@@ -43,7 +43,7 @@ const categoryOfScore = (score: number | null): OhisCategory | 'none' => {
 </script>
 
 <template>
-  <section class="flex flex-col gap-space-sm rounded-xl bg-surface-card p-space-lg shadow-sm">
+  <section class="flex flex-col gap-space-sm rounded-xl bg-surface-card p-space-lg shadow-sm" id="jadwal-pemantauan">
     <div class="flex flex-wrap items-center justify-between gap-2 border-b border-border-subtle pb-2">
       <div class="flex items-center gap-2">
         <CalendarClock class="size-5 text-primary" aria-hidden="true" />
@@ -51,16 +51,12 @@ const categoryOfScore = (score: number | null): OhisCategory | 'none' => {
           Jadwalkan Pemantauan / Kontrol
         </h2>
       </div>
-      <span
-        v-if="dirty"
-        class="rounded-full bg-status-warning-bg px-2.5 py-0.5 font-label-sm text-label-sm font-semibold text-status-warning"
-      >
+      <span v-if="dirty"
+        class="rounded-full bg-status-warning-bg px-2.5 py-0.5 font-label-sm text-label-sm font-semibold text-status-warning">
         Perubahan belum disimpan
       </span>
-      <span
-        v-else-if="savedDraftAt && selectedPatient"
-        class="rounded-full bg-primary-surface px-2.5 py-0.5 font-label-sm text-label-sm font-semibold text-primary"
-      >
+      <span v-else-if="savedDraftAt && selectedPatient"
+        class="rounded-full bg-primary-surface px-2.5 py-0.5 font-label-sm text-label-sm font-semibold text-primary">
         Draft tersimpan otomatis
       </span>
     </div>
@@ -71,16 +67,13 @@ const categoryOfScore = (score: number | null): OhisCategory | 'none' => {
           Pasien
         </Label>
         <div class="relative">
-          <Search
-class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-text-muted"
+          <Search class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-text-muted"
             aria-hidden="true" />
-          <Input
-id="monitoring-patient-search" v-model="patientTerm" autocomplete="off"
+          <Input id="monitoring-patient-search" v-model="patientTerm" autocomplete="off"
             :disabled="Boolean(selectedPatient)"
             class="h-10 rounded-lg pl-9 font-body-sm disabled:bg-surface-container-low disabled:text-text-muted"
             placeholder="Ketik nama atau No. RM untuk mencari..." />
-          <button
-v-if="selectedPatient" type="button"
+          <button v-if="selectedPatient" type="button"
             class="absolute right-2 top-1/2 flex size-6 -translate-y-1/2 items-center justify-center rounded-md text-text-muted hover:bg-surface-container-low hover:text-text-primary"
             aria-label="Ganti pasien" @click="draft.clearPatient()">
             <X class="size-4" aria-hidden="true" />
@@ -91,13 +84,11 @@ v-if="selectedPatient" type="button"
           {{ patientError }}
         </p>
 
-        <div
-v-if="selectedPatient"
+        <div v-if="selectedPatient"
           class="flex items-center gap-space-sm rounded-lg border border-primary-highlight bg-primary-surface/40 p-space-sm">
           <span
             class="flex size-9 shrink-0 items-center justify-center rounded-full font-label-sm text-label-sm font-bold"
-            :class="ohisAvatarClass[categoryOfScore(selectedPatient.ohisScore)]"
-          >
+            :class="ohisAvatarClass[categoryOfScore(selectedPatient.ohisScore)]">
             {{ initialsOf(selectedPatient.fullName) }}
           </span>
           <div class="min-w-0 flex-1">
@@ -111,8 +102,7 @@ v-if="selectedPatient"
           <Check class="size-4 shrink-0 text-primary" aria-hidden="true" />
         </div>
 
-        <div
-v-else-if="!patientTerm.trim()"
+        <div v-else-if="!patientTerm.trim()"
           class="flex items-start gap-2 rounded-lg bg-bg-canvas px-space-sm py-3 font-caption text-caption text-text-muted">
           <ChevronsUpDown class="mt-0.5 size-4 shrink-0" aria-hidden="true" />
           <span>
@@ -121,29 +111,25 @@ v-else-if="!patientTerm.trim()"
           </span>
         </div>
 
-        <div
-v-else-if="isSearching"
+        <div v-else-if="isSearching"
           class="flex items-center gap-2 rounded-lg bg-bg-canvas px-space-sm py-3 font-caption text-caption text-text-muted">
           <Loader2 class="size-4 animate-spin" aria-hidden="true" />
           Mencari data pasien...
         </div>
 
-        <div
-v-else-if="patientResults.length === 0"
+        <div v-else-if="patientResults.length === 0"
           class="rounded-lg bg-bg-canvas px-space-sm py-3 font-caption text-caption text-text-muted">
           Tidak ditemukan pasien dengan kata kunci "{{ patientTerm.trim() }}".
         </div>
 
         <ul v-else class="flex max-h-56 flex-col gap-1 overflow-y-auto rounded-lg bg-bg-canvas p-1">
           <li v-for="patient in patientResults" :key="patient.id">
-            <button
-type="button"
+            <button type="button"
               class="flex w-full items-center gap-space-sm rounded-md px-2 py-1.5 text-left hover:bg-surface-card"
               @click="draft.selectPatient(patient)">
               <span
                 class="flex size-8 shrink-0 items-center justify-center rounded-full font-caption text-caption font-bold"
-                :class="ohisAvatarClass[categoryOfScore(patient.ohisScore)]"
-              >
+                :class="ohisAvatarClass[categoryOfScore(patient.ohisScore)]">
                 {{ initialsOf(patient.fullName) }}
               </span>
               <span class="flex min-w-0 flex-1 flex-col">
@@ -171,7 +157,8 @@ type="button"
           </div>
           <div class="flex flex-col gap-1.5">
             <Label for="monitoring-schedule-time" class="font-label-md text-label-md">Waktu Sesi</Label>
-            <Input id="monitoring-schedule-time" v-model="scheduledTime" type="time" step="300" class="h-10 rounded-lg" />
+            <Input id="monitoring-schedule-time" v-model="scheduledTime" type="time" step="300"
+              class="h-10 rounded-lg" />
             <p v-if="errors.scheduledTime" class="font-caption text-caption text-status-danger">
               {{ errors.scheduledTime }}
             </p>
@@ -181,14 +168,11 @@ type="button"
         <div class="flex flex-col gap-1.5">
           <Label for="monitoring-clinician" class="font-label-md text-label-md">Dokter Pemeriksa</Label>
           <div class="relative">
-            <Stethoscope
-class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-primary"
+            <Stethoscope class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-primary"
               aria-hidden="true" />
-            <Input
-id="monitoring-clinician" v-model="clinician" readonly
+            <Input id="monitoring-clinician" v-model="clinician" readonly
               class="h-10 cursor-not-allowed rounded-lg bg-surface-container-low pl-9 pr-10 font-body-sm text-text-secondary" />
-            <Lock
-class="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-text-muted"
+            <Lock class="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-text-muted"
               aria-hidden="true" />
           </div>
           <p v-if="errors.clinician" class="font-caption text-caption text-status-danger">
@@ -204,8 +188,7 @@ class="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text
           <Label for="monitoring-purpose" class="font-label-md text-label-md">
             Tujuan / Tindakan yang Direncanakan
           </Label>
-          <Textarea
-id="monitoring-purpose" v-model="purpose" rows="3" maxlength="120"
+          <Textarea id="monitoring-purpose" v-model="purpose" rows="3" maxlength="120"
             class="resize-none rounded-lg font-body-sm"
             placeholder="Contoh: Evaluasi kalkulus rahang bawah & scaling ulang" />
           <div class="flex items-start justify-between gap-2">
@@ -245,14 +228,12 @@ id="monitoring-purpose" v-model="purpose" rows="3" maxlength="120"
         </div>
 
         <div class="mt-auto flex flex-col gap-2">
-          <Button
-type="button" :disabled="draft.isSaving.value" class="gap-1.5 rounded-lg font-label-md text-label-md"
+          <Button type="button" :disabled="draft.isSaving.value" class="gap-1.5 rounded-lg font-label-md text-label-md"
             @click="draft.save()">
             <CalendarClock class="size-[18px]" aria-hidden="true" />
             {{ draft.isSaving.value ? 'Menyimpan...' : 'Simpan Jadwal' }}
           </Button>
-          <Button
-type="button" variant="ghost" class="rounded-lg font-label-md text-label-md"
+          <Button type="button" variant="ghost" class="rounded-lg font-label-md text-label-md"
             @click="draft.resetForm()">
             Bersihkan
           </Button>

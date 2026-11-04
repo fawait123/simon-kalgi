@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { ohisCategorySchema } from '~~/shared/schemas/patient.schema'
 
 export const toothConditionSchema = z.enum(['sehat', 'karies', 'tambalan', 'mahkota', 'hilang'], {
   errorMap: () => ({ message: 'Pilih kondisi gigi' }),
@@ -15,6 +16,12 @@ export const heartRhythmSchema = z.enum(['reguler', 'tidak_reguler'], {
 export const examinationStatusSchema = z.enum(['draft', 'final'], {
   errorMap: () => ({ message: 'Status pemeriksaan tidak valid' }),
 })
+
+/** Status rekam medis untuk arsip; diturunkan dari status, jadwal kontrol, dan rencana tindakan. */
+export const examinationRecordStatusSchema = z.enum(
+  ['draf', 'menunggu_tindakan', 'terjadwal_kontrol', 'selesai'],
+  { errorMap: () => ({ message: 'Status rekam medis tidak valid' }) },
+)
 
 const emptyToUndefined = (value: unknown) =>
   typeof value === 'string' && value.trim() === '' ? undefined : value
@@ -141,6 +148,17 @@ export const examinationListQuerySchema = z.object({
   pageSize: z.coerce.number().int().min(1).max(50).default(10),
   patientId: optionalUuid,
   status: z.union([z.literal('all'), examinationStatusSchema]).default('all'),
+  search: z.preprocess(
+    emptyToUndefined,
+    z.string().trim().max(100, 'Kata kunci maksimal 100 karakter').optional(),
+  ),
+  ohis: z.union([z.literal('all'), ohisCategorySchema]).default('all'),
+  recordStatus: z.union([z.literal('all'), examinationRecordStatusSchema]).default('all'),
+  period: z.preprocess(
+    emptyToUndefined,
+    z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'Periode harus berformat YYYY-MM').optional(),
+  ),
+  examinerId: optionalUuid,
 })
 
 export type CreateExaminationInput = z.infer<typeof createExaminationSchema>
@@ -148,6 +166,12 @@ export type UpdateExaminationInput = z.infer<typeof updateExaminationSchema>
 export type ExaminationToothInput = z.infer<typeof examinationToothSchema>
 export type ExaminationIndexScoreInput = z.infer<typeof examinationIndexScoreSchema>
 export type ExaminationListQuery = z.output<typeof examinationListQuerySchema>
+/** Parameter list dari client: field yang punya default tidak wajib dikirim. */
+export type ExaminationListQueryInput
+  = Partial<ExaminationListQuery> & Pick<ExaminationListQuery, 'page' | 'pageSize'>
+export type ExaminationRecordStatus = z.infer<typeof examinationRecordStatusSchema>
+export type ExaminationRecordStatusFilter = ExaminationListQuery['recordStatus']
+export type ExaminationOhisFilter = ExaminationListQuery['ohis']
 export type ToothCondition = z.infer<typeof toothConditionSchema>
 export type IndexSurface = z.infer<typeof indexSurfaceSchema>
 export type HeartRhythm = z.infer<typeof heartRhythmSchema>

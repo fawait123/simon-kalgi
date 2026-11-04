@@ -47,6 +47,30 @@ export const healthWorkerSessionSelect = {
 
 export const healthWorkerAuthSelect = { ...healthWorkerSessionSelect, passwordHash: true }
 
+/** Select untuk halaman pengaturan akun: memuat field yang boleh diubah petugas sendiri. */
+export const healthWorkerAccountSelect = {
+  id: true,
+  medicalId: true,
+  fullName: true,
+  nik: true,
+  role: true,
+  specialization: true,
+  strNumber: true,
+  strExpiryDate: true,
+  sipNumber: true,
+  sipIssuer: true,
+  kkiNumber: true,
+  bio: true,
+  phone: true,
+  email: true,
+  address: true,
+  accessLevel: true,
+  status: true,
+  isPic: true,
+  avatarUrl: true,
+  updatedAt: true,
+} satisfies Prisma.HealthWorkerSelect
+
 export const healthWorkerRepository = {
   transaction<T>(callback: (client: Prisma.TransactionClient) => Promise<T>) {
     return prisma.$transaction(callback)
@@ -73,6 +97,25 @@ export const healthWorkerRepository = {
 
   findSessionUser(id: string, client: DBClient = prisma) {
     return client.healthWorker.findUnique({ where: { id }, select: healthWorkerSessionSelect })
+  },
+
+  findAccountProfile(id: string, client: DBClient = prisma) {
+    return client.healthWorker.findUnique({ where: { id }, select: healthWorkerAccountSelect })
+  },
+
+  findForPasswordChange(id: string, client: DBClient = prisma) {
+    return client.healthWorker.findUnique({
+      where: { id },
+      select: { id: true, passwordHash: true },
+    })
+  },
+
+  updateAccountProfile(id: string, data: Prisma.HealthWorkerUpdateInput, client: DBClient = prisma) {
+    return client.healthWorker.update({ where: { id }, data, select: healthWorkerAccountSelect })
+  },
+
+  updatePasswordHash(id: string, passwordHash: string, client: DBClient = prisma) {
+    return client.healthWorker.update({ where: { id }, data: { passwordHash }, select: { id: true } })
   },
 
   findByCredential(identifier: string, client: DBClient = prisma) {

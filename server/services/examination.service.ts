@@ -2,13 +2,27 @@ import type { OhisCategory, Prisma, ToothCondition } from '@prisma/client'
 import type {
   CreateExaminationInput,
   ExaminationListQuery,
+  ExaminationRecordStatus,
   UpdateExaminationInput,
 } from '~~/shared/schemas/examination.schema'
+import type {
+  ExaminationListItem,
+  ExaminationStatsDto,
+} from '~~/shared/types/examination'
+import type { ExaminationListRecord } from '~~/server/repositories/examination.repository'
 import { examinationRepository } from '~~/server/repositories/examination.repository'
-import { ohisCategoryOf, roundScore, toothConditionLabel } from '~~/shared/types/examination'
+import { createApiError } from '~~/server/utils/errors'
+import {
+  deriveRecordStatus,
+  ohisBands,
+  ohisCategoryOf,
+  roundScore,
+  toothConditionLabel,
+} from '~~/shared/types/examination'
 
 const INDEX_TOOTH_COUNT = 6
 const DMFT_CONDITIONS: ToothCondition[] = ['karies', 'tambalan', 'hilang']
+const MONTH_PERIOD_PATTERN = /^(\d{4})-(0[1-9]|1[0-2])$/
 
 type ConditionRow = { condition: ToothCondition }
 type ScoreRow = { debrisValue: number, calculusValue: number }
@@ -67,6 +81,18 @@ function toIndexScoreCreate(
   }))
 }
 
+const VISIT_NOTE_LIMIT = 500
+
+/** Catatan timeline monitoring: ringkasan diagnosis dan rencana tindakan dari pemeriksaan yang difinalisasi. */
+function buildVisitNote(hygieneDiagnosis: string | null, planOfAction: string[]) {
+  const parts = [
+    hygieneDiagnosis ? `Diagnosis: ${hygieneDiagnosis}` : null,
+    planOfAction.length > 0 ? `Rencana: ${planOfAction.join('; ')}` : null,
+  ].filter((part): part is string => Boolean(part))
+
+  return parts.length > 0 ? parts.join(' · ').slice(0, VISIT_NOTE_LIMIT) : null
+}
+
 async function syncPatientRecord(
   examination: {
     patientId: string,
@@ -78,6 +104,8 @@ async function syncPatientRecord(
     ohisCategory: OhisCategory,
     healthyTeeth: number,
     dmftScore: number,
+    hygieneDiagnosis: string | null,
+    planOfAction: string[],
     nextVisitAt: Date | null,
     nextVisitNote: string | null,
     odontogramNote: string,
@@ -111,6 +139,136 @@ async function syncPatientRecord(
       title: 'Pemeriksaan Gigi & Mulut',
       clinicianName: examination.examinerName,
       ohisScore: examination.ohisScore,
+      note: buildVisitNote(examination.hygieneDiagnosis, examination.planOfAction),
+    },
+    client,
+  )
+}
+
+/** Rentang sebulan penuh berbasis UTC karena `examDate` kolom `@db.Date` tanpa komponen waktu. */
+function monthRange(period: string) {
+  const match = MONTH_PERIOD_PATTERN.exec(period)
+  const year = Number(match?.[1])
+  const month = Number(match?.[2])
+  if (!year || !month)
+    return null
+  return {
+    gte: new Date(Date.UTC(year, month - 1, 1)),
+    lt: new Date(Date.UTC(year, month, 1)),
+  }
+}
+
+/**
+ * Terjemahan status arsip ke `where` Prisma. `menunggu_tindakan` memakai `NOT + isEmpty`
+ * karena filter list scalar Prisma tidak menyediakan `isNotEmpty`.
+ */
+const recordStatusWhere: Record<ExaminationRecordStatus, Prisma.ExaminationWhereInput> = {
+  draf: { status: 'draft' },
+  terjadwal_kontrol: { status: 'final', nextVisitAt: { not: null } },
+  menunggu_tindakan: { status: 'final', nextVisitAt: null, NOT: { planOfAction: { isEmpty: true } } },
+  selesai: { status: 'final', nextVisitAt: null, planOfAction: { isEmpty: true } },
+}
+
+function buildWhere(query: ExaminationListQuery): Prisma.ExaminationWhereInput {
+  const where: Prisma.ExaminationWhereInput = {}
+  const and: Prisma.ExaminationWhereInput[] = []
+  if (query.patientId) where.patientId = query.patientId
+  if (query.status !== 'all') where.status = query.status
+  if (query.ohis !== 'all') where.ohisCategory = query.ohis
+  if (query.examinerId) where.examinerId = query.examinerId
+  // Lewat AND agar `status` lama tidak tertimpa klausa turunan `recordStatus`.
+  if (query.recordStatus !== 'all') and.push(recordStatusWhere[query.recordStatus])
+
+  if (query.period) {
+    const range = monthRange(query.period)
+    if (range) where.examDate = range
+  }
+
+  const search = query.search?.trim()
+  if (search) {
+    where.OR = [
+      { patient: { medicalRecordNo: { contains: search, mode: 'insensitive' } } },
+      { patient: { fullName: { contains: search, mode: 'insensitive' } } },
+      { patient: { nik: { contains: search } } },
+      { examinerName: { contains: search, mode: 'insensitive' } },
+    ]
+  }
+  if (and.length > 0)
+    where.AND = and
+  return where
+}
+
+function isoOf(date: Date | null) {
+  return date ? date.toISOString() : null
+}
+
+function mapListItem(item: ExaminationListRecord): ExaminationListItem {
+  return {
+    ...item,
+    examDate: item.examDate.toISOString(),
+    createdAt: item.createdAt.toISOString(),
+    updatedAt: item.updatedAt.toISOString(),
+    nextVisitAt: isoOf(item.nextVisitAt),
+    patient: { ...item.patient, birthDate: item.patient.birthDate.toISOString() },
+    recordStatus: deriveRecordStatus(item),
+  }
+}
+
+function roundPercent(value: number) {
+  return Math.round(value * 10) / 10
+}
+
+function currentPeriod() {
+  const now = new Date()
+  return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`
+}
+
+/**
+ * Ringkasan pasien disusun ulang dari pemeriksaan `final` terbaru yang tersisa.
+ * Baris `PatientVisit` sengaja tidak dihapus: tabel itu tidak punya `examinationId`, dan
+ * satu pemeriksaan yang di-patch berulang kali bisa menulis beberapa baris visit identik.
+ */
+async function resyncPatientSummary(patientId: string, client: Prisma.TransactionClient) {
+  const latest = await examinationRepository.findLatestFinalForPatient(patientId, client)
+
+  if (!latest) {
+    await examinationRepository.syncPatient(
+      patientId,
+      {
+        ohisScore: null,
+        debrisIndex: null,
+        calculusIndex: null,
+        ohisCategory: null,
+        dmftScore: null,
+        odontogramNote: null,
+        lastVisitAt: null,
+        nextVisitAt: null,
+        nextVisitClinician: null,
+        controlTitle: null,
+        controlNote: null,
+        controlPriority: 'normal',
+      },
+      client,
+    )
+    return
+  }
+
+  await examinationRepository.syncPatient(
+    patientId,
+    {
+      ohisScore: latest.ohisScore,
+      debrisIndex: latest.debrisIndex,
+      calculusIndex: latest.calculusIndex,
+      ohisCategory: latest.ohisCategory,
+      healthyTeeth: latest.healthyTeeth,
+      dmftScore: latest.dmftScore,
+      odontogramNote: buildOdontogramNote(latest.teeth, latest.ohisScore),
+      lastVisitAt: latest.examDate,
+      nextVisitAt: latest.nextVisitAt,
+      nextVisitClinician: latest.nextVisitAt ? latest.examinerName : null,
+      controlTitle: latest.nextVisitAt ? 'Kontrol Hasil Pemeriksaan' : null,
+      controlNote: latest.nextVisitNote?.slice(0, 120) ?? null,
+      controlPriority: latest.ohisCategory === 'buruk' ? 'urgent' : 'normal',
     },
     client,
   )
@@ -118,18 +276,49 @@ async function syncPatientRecord(
 
 export const examinationService = {
   async list(query: ExaminationListQuery) {
-    const where: Prisma.ExaminationWhereInput = {
-      ...(query.patientId ? { patientId: query.patientId } : {}),
-      ...(query.status !== 'all' ? { status: query.status } : {}),
-    }
-
     const { items, total } = await examinationRepository.findPage({
-      where,
+      where: buildWhere(query),
       page: query.page,
       pageSize: query.pageSize,
     })
 
-    return { data: items, meta: { page: query.page, pageSize: query.pageSize, total } }
+    return {
+      data: items.map(mapListItem),
+      meta: { page: query.page, pageSize: query.pageSize, total },
+    }
+  },
+
+  async stats(): Promise<ExaminationStatsDto> {
+    const range = monthRange(currentPeriod())
+    const [grouped, newThisMonth] = await Promise.all([
+      examinationRepository.archiveGroupStats(),
+      range
+        ? examinationRepository.archiveCountInMonth(range.gte, range.lt)
+        : Promise.resolve(0),
+    ])
+
+    const countOf = (category: OhisCategory) =>
+      grouped.find(row => row.ohisCategory === category)?._count._all ?? 0
+    const totalRecords = grouped.reduce((sum, row) => sum + row._count._all, 0)
+    const scoreSum = grouped.reduce(
+      (sum, row) => sum + (row._avg.ohisScore ?? 0) * row._count._all,
+      0,
+    )
+    const averageOhisScore = totalRecords === 0 ? 0 : roundScore(scoreSum / totalRecords)
+
+    return {
+      totalRecords,
+      newThisMonth,
+      averageOhisScore,
+      averageOhisCategory: ohisCategoryOf(averageOhisScore),
+      distribution: ohisBands.map(band => ({
+        key: band.category,
+        label: band.label,
+        count: countOf(band.category),
+        percent:
+          totalRecords === 0 ? 0 : roundPercent((countOf(band.category) / totalRecords) * 100),
+      })),
+    }
   },
 
   getById(id: string) {
@@ -246,6 +435,19 @@ export const examinationService = {
         )
       }
       return { ...updated, nextVisitAt, nextVisitNote }
+    })
+  },
+
+  async remove(id: string) {
+    const existing = await examinationRepository.findExisting(id)
+    if (!existing)
+      throw createApiError(404, 'Pemeriksaan tidak ditemukan.')
+
+    return examinationRepository.transaction(async (client) => {
+      const deleted = await examinationRepository.delete(id, client)
+      if (existing.status === 'final')
+        await resyncPatientSummary(deleted.patientId, client)
+      return deleted
     })
   },
 }

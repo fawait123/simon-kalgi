@@ -1,4 +1,4 @@
-import type { ExaminationListQuery } from '~~/shared/schemas/examination.schema'
+import type { ExaminationListQueryInput } from '~~/shared/schemas/examination.schema'
 import type { HealthWorkerListQuery } from '~~/shared/schemas/health-worker.schema'
 import type { MonitoringListQuery, MonitoringTrendRange } from '~~/shared/schemas/monitoring.schema'
 import type { NotificationListQuery } from '~~/shared/schemas/notification.schema'
@@ -25,11 +25,12 @@ export const patientKeys = {
 export const examinationKeys = {
   all: ['examinations'] as const,
   lists: () => [...examinationKeys.all, 'list'] as const,
-  list: (params: ExaminationListQuery) => [...examinationKeys.lists(), params] as const,
+  list: (params: ExaminationListQueryInput) => [...examinationKeys.lists(), params] as const,
   details: () => [...examinationKeys.all, 'detail'] as const,
   detail: (id: string) => [...examinationKeys.details(), id] as const,
   latest: () => [...examinationKeys.all, 'latest'] as const,
   latestFor: (patientId: string) => [...examinationKeys.latest(), patientId] as const,
+  stats: () => [...examinationKeys.all, 'stats'] as const,
 }
 
 export const monitoringKeys = {
@@ -48,4 +49,10 @@ export const notificationKeys = {
   lists: () => [...notificationKeys.all, 'list'] as const,
   list: (params: NotificationListQuery) => [...notificationKeys.lists(), params] as const,
   stats: () => [...notificationKeys.all, 'stats'] as const,
+}
+
+export const accountKeys = {
+  all: ['account'] as const,
+  profile: () => [...accountKeys.all, 'profile'] as const,
+  stats: () => [...accountKeys.all, 'stats'] as const,
 }

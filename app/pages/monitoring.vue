@@ -49,7 +49,7 @@ const meta = computed(
 const errorText = computed(() =>
   listQuery.error.value
     ? (listQuery.error.value as { statusMessage?: string }).statusMessage
-      ?? 'Basis data monitoring klinik tidak dapat dijangkau.'
+    ?? 'Basis data monitoring klinik tidak dapat dijangkau.'
     : undefined)
 
 const statsQuery = useMonitoringStatsQuery()
@@ -152,8 +152,7 @@ function resetFilters() {
             Monitoring Pasien
           </h1>
           <span
-            class="rounded-full border border-primary-highlight bg-primary-surface px-2 py-0.5 font-label-sm text-label-sm font-semibold text-primary"
-          >
+            class="rounded-full border border-primary-highlight bg-primary-surface px-2 py-0.5 font-label-sm text-label-sm font-semibold text-primary">
             Program OHI-S 6 Bulan
           </span>
         </div>
@@ -162,8 +161,8 @@ function resetFilters() {
         </p>
       </div>
 
-      <Button
-type="button" class="flex shrink-0 items-center gap-2 self-start rounded-lg font-label-md text-label-md shadow-sm active:scale-[0.98] lg:self-auto"
+      <Button type="button"
+        class="flex shrink-0 items-center gap-2 self-start rounded-lg font-label-md text-label-md shadow-sm active:scale-[0.98] lg:self-auto"
         @click="focusSchedule()">
         <CalendarPlus class="size-4.5" aria-hidden="true" />
         Jadwalkan Pemantauan / Kontrol
@@ -174,70 +173,35 @@ type="button" class="flex shrink-0 items-center gap-2 self-start rounded-lg font
 
     <div class="grid grid-cols-1 gap-space-lg xl:grid-cols-12">
       <div class="flex flex-col gap-space-lg xl:col-span-8">
-        <MonitoringTrendCard
-          :trend="trend"
-          :range="trendRange"
-          :is-pending="trendQuery.isPending.value"
-          @update:range="trendRange = $event"
-        />
+        <MonitoringTrendCard :trend="trend" :range="trendRange" :is-pending="trendQuery.isPending.value"
+          @update:range="trendRange = $event" />
       </div>
       <div class="flex flex-col gap-space-lg xl:col-span-4">
-        <MonitoringComplianceCard
-          :distribution="stats?.distribution ?? []"
-          :active-status="status"
-          :critical-count="stats?.criticalPatients ?? 0"
-          :late-count="stats?.needsAttention ?? 0"
-          :is-pending="statsQuery.isPending.value"
-          :is-blasting="blastMutation.isPending.value"
-          @blast="blastMutation.mutate()"
-          @filter-status="filterFromDistribution"
-        />
+        <MonitoringComplianceCard :distribution="stats?.distribution ?? []" :active-status="status"
+          :critical-count="stats?.criticalPatients ?? 0" :late-count="stats?.needsAttention ?? 0"
+          :is-pending="statsQuery.isPending.value" :is-blasting="blastMutation.isPending.value"
+          @blast="blastMutation.mutate()" @filter-status="filterFromDistribution" />
       </div>
     </div>
 
     <div class="flex flex-col rounded-xl bg-surface-card shadow-sm">
-      <MonitoringFilterToolbar
-        v-model:search="search"
-        v-model:status="status"
-        v-model:ohis="ohis"
-        v-model:schedule="scheduleRange"
-        @reset="resetFilters"
-      />
+      <MonitoringFilterToolbar v-model:search="search" v-model:status="status" v-model:ohis="ohis"
+        v-model:schedule="scheduleRange" @reset="resetFilters" />
       <Separator class="bg-border-subtle" />
-      <MonitoringPatientTable
-        :rows="rows"
-        :is-pending="listQuery.isPending.value"
-        :is-error="listQuery.isError.value"
-        :error-text="errorText"
-        @detail="focusRow"
-        @schedule="scheduleFromRow"
-        @remind="remindFromRow"
-        @retry="() => listQuery.refetch()"
-      />
+      <MonitoringPatientTable :rows="rows" :is-pending="listQuery.isPending.value" :is-error="listQuery.isError.value"
+        :error-text="errorText" @detail="focusRow" @schedule="scheduleFromRow" @remind="remindFromRow"
+        @retry="() => listQuery.refetch()" />
       <template v-if="!listQuery.isError.value">
         <Separator class="bg-border-subtle" />
-        <MonitoringPagination
-          :page="meta.page"
-          :page-size="meta.pageSize"
-          :total="meta.total"
-          :is-pending="listQuery.isPending.value"
-          @update:page="page = $event"
-        />
+        <MonitoringPagination :page="meta.page" :page-size="meta.pageSize" :total="meta.total"
+          :is-pending="listQuery.isPending.value" @update:page="page = $event" />
       </template>
     </div>
 
-    <div id="jadwal-pemantauan">
-      <MonitoringScheduleForm />
-    </div>
+    <MonitoringPatientDetailCard :detail="detail" :is-pending="Boolean(activePatientId) && detailQuery.isPending.value"
+      :is-error="detailQuery.isError.value" :is-sending-reminder="reminderMutation.isPending.value"
+      @schedule="scheduleFromDetail" @remind="remindFromDetail" @retry="() => detailQuery.refetch()" />
 
-    <MonitoringPatientDetailCard
-      :detail="detail"
-      :is-pending="Boolean(activePatientId) && detailQuery.isPending.value"
-      :is-error="detailQuery.isError.value"
-      :is-sending-reminder="reminderMutation.isPending.value"
-      @schedule="scheduleFromDetail"
-      @remind="remindFromDetail"
-      @retry="() => detailQuery.refetch()"
-    />
+    <MonitoringScheduleForm />
   </section>
 </template>

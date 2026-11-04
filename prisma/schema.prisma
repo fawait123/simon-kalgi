@@ -105,6 +105,10 @@ model HealthWorker {
   specialization   String?          @db.VarChar(100)
   strNumber        String           @map("str_number") @db.VarChar(40)
   strExpiryDate    DateTime         @map("str_expiry_date") @db.Date
+  sipNumber        String?          @map("sip_number") @db.VarChar(40)
+  sipIssuer        String?          @map("sip_issuer") @db.VarChar(80)
+  kkiNumber        String?          @map("kki_number") @db.VarChar(20)
+  bio              String?          @db.VarChar(600)
   phone            String           @db.VarChar(20)
   email            String           @unique @db.VarChar(120)
   address          String?          @db.VarChar(255)
@@ -162,6 +166,7 @@ model Examination {
   indexScores ExaminationIndexScore[]
 
   @@index([patientId, examDate])
+  @@index([examinerId, examDate])
   @@index([status])
   @@map("examinations")
 }

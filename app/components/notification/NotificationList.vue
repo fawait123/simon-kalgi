@@ -69,22 +69,14 @@ function timeLabel(value: string) {
           {{ errorText ?? 'Layanan notifikasi sedang tidak tersedia.' }}
         </p>
       </div>
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        class="mt-1 flex items-center gap-2 rounded-lg"
-        @click="emits('retry')"
-      >
+      <Button type="button" variant="outline" size="sm" class="mt-1 flex items-center gap-2 rounded-lg"
+        @click="emits('retry')">
         <RotateCcw class="size-4" aria-hidden="true" />
         Coba Lagi
       </Button>
     </div>
 
-    <div
-      v-else-if="items.length === 0"
-      class="flex flex-col items-center gap-2 p-space-xl text-center"
-    >
+    <div v-else-if="items.length === 0" class="flex flex-col items-center gap-2 p-space-xl text-center">
       <span class="flex size-11 items-center justify-center rounded-full bg-surface-container-low text-text-muted">
         <Inbox class="size-6" aria-hidden="true" />
       </span>
@@ -97,38 +89,27 @@ function timeLabel(value: string) {
     </div>
 
     <ul v-else class="flex flex-col gap-px">
-      <li
-        v-for="item in items"
-        :key="item.id"
+      <li v-for="item in items" :key="item.id"
         class="flex flex-col gap-space-sm rounded-lg p-space-md transition-colors sm:flex-row sm:items-start sm:gap-3"
-        :class="item.isRead ? 'bg-surface-card' : 'bg-primary-surface/60'"
-      >
-        <span
-          class="flex size-10 shrink-0 items-center justify-center rounded-lg"
+        :class="item.isRead ? 'bg-surface-card' : 'bg-primary-surface/60'">
+        <span class="flex size-10 shrink-0 items-center justify-center rounded-lg"
           :class="notificationCategoryBadgeClass[item.category]"
-          :aria-label="`Kategori ${notificationCategoryLabel[item.category]}`"
-        >
+          :aria-label="`Kategori ${notificationCategoryLabel[item.category]}`">
           <component :is="categoryIcon[item.category]" class="size-5" aria-hidden="true" />
         </span>
 
         <div class="flex min-w-0 flex-1 flex-col gap-1">
           <div class="flex flex-wrap items-center gap-2">
-            <h3
-              class="font-label-md text-label-md"
-              :class="item.isRead ? 'font-medium text-text-secondary' : 'font-bold text-text-primary'"
-            >
+            <h3 class="font-label-md text-label-md"
+              :class="item.isRead ? 'font-medium text-text-secondary' : 'font-bold text-text-primary'">
               {{ item.title }}
             </h3>
-            <span
-              class="rounded px-1.5 py-0.5 font-caption text-caption font-semibold"
-              :class="notificationCategoryBadgeClass[item.category]"
-            >
+            <span class="rounded px-1.5 py-0.5 font-caption text-caption font-semibold"
+              :class="notificationCategoryBadgeClass[item.category]">
               {{ notificationCategoryLabel[item.category] }}
             </span>
-            <span
-              v-if="!item.isRead"
-              class="flex items-center gap-1 rounded bg-primary px-1.5 py-0.5 font-caption text-caption font-semibold uppercase tracking-wider text-on-primary"
-            >
+            <span v-if="!item.isRead"
+              class="flex text-white items-center gap-1 rounded bg-primary px-1.5 py-0.5 font-caption text-caption font-semibold uppercase tracking-wider text-on-primary">
               Baru
             </span>
           </div>
@@ -151,22 +132,13 @@ function timeLabel(value: string) {
         </div>
 
         <div class="flex shrink-0 items-center gap-2 self-start sm:self-center">
-          <Button
-            v-if="!item.isRead"
-            type="button"
-            variant="outline"
-            size="sm"
-            class="flex items-center gap-1.5 rounded-lg font-caption text-caption"
-            @click="emits('mark-read', item.id)"
-          >
+          <Button v-if="!item.isRead" type="button" variant="outline" size="sm"
+            class="flex items-center gap-1.5 rounded-lg font-caption text-caption" @click="emits('mark-read', item.id)">
             Tandai dibaca
           </Button>
-          <NuxtLink
-            v-if="item.link"
-            :to="item.link"
+          <NuxtLink v-if="item.link" :to="item.link"
             class="flex items-center gap-1 rounded-lg px-2 py-1.5 font-caption text-caption font-semibold text-primary transition-colors hover:bg-primary-surface"
-            @click="!item.isRead && emits('mark-read', item.id)"
-          >
+            @click="!item.isRead && emits('mark-read', item.id)">
             Buka
             <ChevronRight class="size-4" aria-hidden="true" />
           </NuxtLink>

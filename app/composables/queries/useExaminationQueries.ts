@@ -1,15 +1,16 @@
 import type {
   CreateExaminationInput,
-  ExaminationListQuery,
+  ExaminationListQueryInput,
   UpdateExaminationInput,
 } from '~~/shared/schemas/examination.schema'
 import type {
   ExaminationDetailDto,
   ExaminationListResponse,
+  ExaminationStatsDto,
 } from '~~/shared/types/examination'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { toast } from 'vue-sonner'
-import { examinationKeys, patientKeys } from '~/lib/query-keys'
+import { examinationKeys, monitoringKeys, patientKeys } from '~/lib/query-keys'
 
 function errorMessage(error: unknown, fallback: string) {
   const typed = error as { data?: { message?: string }, statusMessage?: string } | null
@@ -23,7 +24,7 @@ function invalidateExaminations(queryClient: ReturnType<typeof useQueryClient>, 
   queryClient.invalidateQueries({ queryKey: patientKeys.detail(patientId) })
 }
 
-export function useExaminationsQuery(params: () => ExaminationListQuery, enabled: () => boolean) {
+export function useExaminationsQuery(params: () => ExaminationListQueryInput, enabled: () => boolean) {
   return useQuery({
     queryKey: computed(() => examinationKeys.list(params())),
     queryFn: () => $fetch<ExaminationListResponse>('/api/examinations', { query: params() }),
@@ -85,5 +86,31 @@ export function useUpdateExaminationMutation() {
       )
     },
     onError: error => toast.error(errorMessage(error, 'Gagal memperbarui pemeriksaan.')),
+  })
+}
+
+export function useExaminationStatsQuery() {
+  return useQuery({
+    queryKey: examinationKeys.stats(),
+    queryFn: () => $fetch<{ data: ExaminationStatsDto }>('/api/examinations/stats'),
+  })
+}
+
+export function useDeleteExaminationMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, patientId }: { id: string, patientId: string }) =>
+      $fetch<{ data: { id: string } }>(`/api/examinations/${id}`, { method: 'DELETE' })
+        .then(response => ({ ...response.data, patientId })),
+    onSuccess: ({ id, patientId }) => {
+      queryClient.invalidateQueries({ queryKey: examinationKeys.all })
+      queryClient.removeQueries({ queryKey: examinationKeys.detail(id) })
+      queryClient.invalidateQueries({ queryKey: patientKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: patientKeys.detail(patientId) })
+      queryClient.invalidateQueries({ queryKey: monitoringKeys.all })
+      toast.success('Rekam medis pemeriksaan berhasil dihapus.')
+    },
+    onError: error => toast.error(errorMessage(error, 'Gagal menghapus rekam medis.')),
   })
 }

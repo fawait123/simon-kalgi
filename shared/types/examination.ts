@@ -7,12 +7,19 @@ import type {
   ToothCondition,
 } from '@prisma/client'
 
+import type { ExaminationRecordStatus } from '~~/shared/schemas/examination.schema'
+
 export interface ExaminationPatientRef {
   id: string
   medicalRecordNo: string
   fullName: string
   birthDate: string
   gender: Gender
+  phone: string
+}
+
+export interface ExaminationExaminerRef {
+  specialization: string | null
 }
 
 export interface ExaminationToothDto {
@@ -67,7 +74,11 @@ export interface ExaminationDetailDto extends ExaminationDto {
 
 export interface ExaminationListItem extends ExaminationDto {
   patient: ExaminationPatientRef
+  examiner: ExaminationExaminerRef | null
+  recordStatus: ExaminationRecordStatus
 }
+
+export type ExaminationRecordTab = 'odontogram' | 'ohis'
 
 export interface ExaminationListResponse {
   data: ExaminationListItem[]
@@ -76,6 +87,21 @@ export interface ExaminationListResponse {
     pageSize: number
     total: number
   }
+}
+
+export interface ExaminationStatsSegmentDto {
+  key: OhisCategory
+  label: string
+  count: number
+  percent: number
+}
+
+export interface ExaminationStatsDto {
+  totalRecords: number
+  newThisMonth: number
+  averageOhisScore: number
+  averageOhisCategory: OhisCategory
+  distribution: ExaminationStatsSegmentDto[]
 }
 
 export const totalPermanentTeeth = 32
@@ -251,6 +277,48 @@ export const examinationStatusBadgeClass: Record<ExaminationStatus, string> = {
   draft: 'border border-status-warning/30 bg-status-warning-bg text-status-warning',
   final: 'border border-status-success/30 bg-status-success-bg text-status-success',
 }
+
+interface RecordStatusSource {
+  status: ExaminationStatus
+  nextVisitAt: Date | string | null
+  planOfAction: readonly string[]
+}
+
+/**
+ * Status arsip rekam medis. Urutan cek penting: jadwal kontrol menang atas rencana tindakan,
+ * supaya rekaman yang sudah dijadwalkan kontrol tidak muncul sebagai "menunggu tindakan".
+ */
+export function deriveRecordStatus(exam: RecordStatusSource): ExaminationRecordStatus {
+  if (exam.status === 'draft')
+    return 'draf'
+  if (exam.nextVisitAt)
+    return 'terjadwal_kontrol'
+  return exam.planOfAction.length > 0 ? 'menunggu_tindakan' : 'selesai'
+}
+
+export const examinationRecordStatusLabel: Record<ExaminationRecordStatus, string> = {
+  draf: 'Draf',
+  menunggu_tindakan: 'Menunggu Tindakan',
+  terjadwal_kontrol: 'Terjadwal Kontrol',
+  selesai: 'Selesai',
+}
+
+export const examinationRecordStatusBadgeClass: Record<ExaminationRecordStatus, string> = {
+  draf: 'bg-surface-container text-text-secondary',
+  menunggu_tindakan: 'bg-status-danger-bg text-status-danger',
+  terjadwal_kontrol: 'bg-status-warning-bg text-status-warning',
+  selesai: 'bg-status-success-bg text-status-success',
+}
+
+export const examinationRecordStatusFilterOptions: {
+  value: ExaminationRecordStatus
+  label: string
+}[] = [
+  { value: 'selesai', label: 'Selesai Evaluasi' },
+  { value: 'menunggu_tindakan', label: 'Menunggu Tindakan' },
+  { value: 'terjadwal_kontrol', label: 'Terjadwal Kontrol' },
+  { value: 'draf', label: 'Draf Belum Difinalisasi' },
+]
 
 export const heartRhythmLabel: Record<HeartRhythm, string> = {
   reguler: 'Reguler',
