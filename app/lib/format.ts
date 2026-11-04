@@ -49,6 +49,56 @@ export function formatVisitSchedule(value: string | Date | null) {
   return formatShortDateId(date)
 }
 
+export function formatRelativeTimeId(value: string | Date | null) {
+  if (!value) return '-'
+  const date = value instanceof Date ? value : new Date(value)
+  if (Number.isNaN(date.getTime())) return '-'
+  const seconds = Math.round((Date.now() - date.getTime()) / 1000)
+  if (seconds < 60) return 'Baru saja'
+  const minutes = Math.round(seconds / 60)
+  if (minutes < 60) return `${minutes} menit lalu`
+  const hours = Math.round(minutes / 60)
+  if (hours < 24) return `${hours} jam lalu`
+  const days = Math.round(hours / 24)
+  if (days < 7) return `${days} hari lalu`
+  return formatShortDateId(date)
+}
+
+const utcDateFormatter = new Intl.DateTimeFormat('id-ID', {
+  day: '2-digit',
+  month: 'short',
+  year: 'numeric',
+  timeZone: 'UTC',
+})
+
+const utcLongDateFormatter = new Intl.DateTimeFormat('id-ID', {
+  weekday: 'long',
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+  timeZone: 'UTC',
+})
+
+/** Tanggal dibaca sebagai wall-clock UTC supaya jadwal tidak bergeser ke zona lokal. */
+export function formatUtcShortDate(value: string | Date | null) {
+  if (!value) return '-'
+  const date = value instanceof Date ? value : new Date(value)
+  return Number.isNaN(date.getTime()) ? '-' : utcDateFormatter.format(date).replace('.', '')
+}
+
+export function formatUtcLongDate(value: string | Date | null) {
+  if (!value) return '-'
+  const date = value instanceof Date ? value : new Date(value)
+  return Number.isNaN(date.getTime()) ? '-' : utcLongDateFormatter.format(date)
+}
+
+export function formatUtcTime(value: string | Date | null) {
+  if (!value) return '-'
+  const date = value instanceof Date ? value : new Date(value)
+  if (Number.isNaN(date.getTime())) return '-'
+  return `${String(date.getUTCHours()).padStart(2, '0')}:${String(date.getUTCMinutes()).padStart(2, '0')}`
+}
+
 export function initialsOf(fullName: string) {
   const words = fullName
     .replace(/,.*$/, '')

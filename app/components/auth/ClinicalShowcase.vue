@@ -84,7 +84,7 @@ import { Clock, Zap } from 'lucide-vue-next'
               <div class="min-w-0">
                 <h3 class="text-xs font-semibold text-white">Monitoring &amp; Recall Kontrol Pasien</h3>
                 <p class="text-[11px] text-primary-highlight/70">
-                  Notifikasi WhatsApp terjadwal untuk kontrol periodik
+                  Notifikasi in-app terjadwal untuk kontrol periodik
                 </p>
               </div>
             </div>

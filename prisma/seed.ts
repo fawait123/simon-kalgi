@@ -790,6 +790,504 @@ async function seedExamination() {
   console.log(`Seeded examination for ${patient.fullName} (OHI-S ${ohisScore.toFixed(2)})`)
 }
 
+const MONITORING_TARGET = 76
+const MONITORING_PROGRAMS = [
+  'Program Pemantauan Periodontitis Kronis Ringan',
+  'Program Pemantauan Pasca Scaling & Root Planing',
+  'Program Pencegahan Karies & Aplikasi Fluor Topikal',
+  'Program Edukasi Hygiene Oral Pasien Risiko Tinggi',
+]
+const MONITORING_PURPOSES = [
+  'Evaluasi kalkulus subgingiva dan pengukuran ulang OHI-S',
+  'Kontrol hasil scaling serta aplikasi fluoride varnish',
+  'Edukasi ulang dental floss dan penilaian kepatuhan pasien',
+  'Pemantauan poket periodontal pada kuadran posterior',
+]
+const MONITORING_VISIT_PREFIXES = ['Kunjungan ', 'Sesi Pemantauan ']
+const MONITORING_DOCTOR_NOTES: Record<MonitoringStatusValue, string[]> = {
+  terkontrol: [
+    'Kepatuhan recall terjaga, pasien hadir tepat waktu pada tiga sesi terakhir. Edukasi hygiene oral dilanjutkan.',
+    'Kondisi gingiva stabil tanpa tanda inflamasi baru. Interval pemantauan tiga bulan dipertahankan.',
+    'Instruksi menyikat gigi dan dental floss dijalankan konsisten. Rencana kontrol berjalan sesuai program.',
+  ],
+  perlu_perhatian: [
+    'Terdapat penumpukan kalkulus ringan pada servikal gigi anterior bawah. Dijadwalkan scaling profilaksis.',
+    'Kebersihan mulut membaik sebagian, masih ada kuadran posterior dengan debris. Pengingat kontrol diperketat.',
+    'Gusi masih mudah berdarah pada satu kuadran. Pasien perlu pendampingan teknik menyikat gigi.',
+  ],
+  terlambat: [
+    'Pasien melewatkan sesi recall terakhir. Skor kebersihan belum bergerak, diperlukan pengingat aktif.',
+    'Interval kontrol melebar sehingga penumpukan kalkulus meningkat. Recall segera dijadwalkan ulang.',
+    'Kepatuhan menurun sejak pindah kerja. Rencana kontrol diulang dengan pengingat in-app.',
+  ],
+  kritis: [
+    'Tanda inflamasi gingiva meningkat sejak kunjungan terakhir. Dirujuk untuk scaling bawah gingiva segera.',
+    'Risiko gingivitis rekuren tinggi. Kepatuhan checklist rendah dan kontrol tertunda lama.',
+    'Kondisi periodontal memburuk walau edukasi sudah diberikan. Intervensi profesional dan recall dipercepat.',
+  ],
+}
+const MONITORING_VALIDATORS = [
+  'drg. Sarah Jenkins, Sp.KG (SIP: 102/SIP-D/2021)',
+  'drg. Raditya Pratama, Sp.Perio (SIP: 446/SIP-D/2022)',
+  'drg. Maya Anindita (SIP: 218/SIP-D/2023)',
+]
+
+type MonitoringStatusValue = 'terkontrol' | 'perlu_perhatian' | 'terlambat' | 'kritis'
+type MonitoringScorePair = { ohisScore: number, debrisIndex: number, calculusIndex: number }
+
+const kritisIndexes = new Set([5, 23, 41, 67])
+const terlambatIndexes = new Set([3, 11, 19, 27, 35, 43, 51, 59, 63, 71])
+const perhatianIndexes = new Set([7, 13, 21, 29, 37, 45, 53, 61, 65, 69, 73, 75])
+
+const featuredPrograms: Record<
+  string,
+  {
+    status: MonitoringStatusValue
+    programName: string
+    checklistPercent: number
+    baseline: MonitoringScorePair
+    current: MonitoringScorePair
+    doctorNote: string
+    validatedByClinician: string
+    scheduleOffsetDays: number
+    scheduledVisitNote: string
+    stages: {
+      offsetMonths?: number
+      offsetDays?: number
+      day?: number
+      title: string
+      clinicianName: string
+      ohisScore: number
+      note: string
+    }[]
+  }
+> = {
+  'RM-2025-0145': {
+    status: 'terkontrol',
+    programName: 'Program Pemantauan Periodontitis Kronis Ringan',
+    checklistPercent: 92,
+    baseline: { ohisScore: 3.4, debrisIndex: 1.8, calculusIndex: 1.6 },
+    current: { ohisScore: 1.2, debrisIndex: 0.6, calculusIndex: 0.6 },
+    doctorNote:
+      'Inflamasi gingiva tereduksi tuntas, kepatuhan sikat gigi teknik Bass memuaskan. Tidak ada poket aktif baru. Lanjutkan pemantauan interval 3 bulan.',
+    validatedByClinician: 'drg. Raditya Pratama, Sp.Perio (SIP: 446/SIP-D/2022)',
+    scheduleOffsetDays: 7,
+    scheduledVisitNote: 'Evaluasi poket pasca-scaling dan perhitungan OHI-S kuadran 4',
+    stages: [
+      {
+        offsetMonths: -6,
+        day: 18,
+        title: 'Kunjungan 1 (Bulan ke-1): Scaling Supragingiva & Pembersihan Awal',
+        clinicianName: 'drg. Raditya Pratama, Sp.Perio',
+        ohisScore: 3.4,
+        note: 'Debris Index: 1.80, Calculus Index: 1.60. Pendarahan saat probing (BOP) pada region 31-41. Edukasi teknik menyikat gigi Bass modifikasi.',
+      },
+      {
+        offsetMonths: -3,
+        day: 20,
+        title: 'Kunjungan 2 (Bulan ke-3): Scaling Subgingiva & Root Planing Evaluasi',
+        clinicianName: 'drg. Raditya Pratama, Sp.Perio',
+        ohisScore: 2.1,
+        note: 'Reduksi poket periodontal dari 4mm menjadi 3mm. Penurunan kalkulus subgingiva 50%. Pasien konsisten memakai dental floss 1x sehari.',
+      },
+      {
+        offsetDays: -14,
+        title: 'Kunjungan 3 (Bulan ke-6): Pemeliharaan Berkala & Topikal Fluor',
+        clinicianName: 'drg. Raditya Pratama, Sp.Perio',
+        ohisScore: 1.2,
+        note: 'Profilaksis dan poles akhir. Aplikasi varnish fluor untuk pencegahan karies sekunder. Kondisi gingiva kenyal, warna merah muda normal.',
+      },
+    ],
+  },
+  'RM-2025-0144': {
+    status: 'perlu_perhatian',
+    programName: 'Program Pemantauan Pasca Scaling & Root Planing',
+    checklistPercent: 81,
+    baseline: { ohisScore: 2.6, debrisIndex: 1.5, calculusIndex: 1.1 },
+    current: { ohisScore: 1.4, debrisIndex: 0.9, calculusIndex: 0.5 },
+    doctorNote:
+      'Pasien diabetes terkontrol, penyembuhan gingiva melambat pada kuadran kiri bawah. Perlu pengingat kontrol agar interval tidak melebar.',
+    validatedByClinician: 'drg. Sarah Jenkins, Sp.KG (SIP: 102/SIP-D/2021)',
+    scheduleOffsetDays: 4,
+    scheduledVisitNote: 'Kontrol gingiva kuadran 36-37 dan penyesuaian instruksi flossing',
+    stages: [
+      {
+        offsetMonths: -5,
+        day: 12,
+        title: 'Kunjungan 1 (Bulan ke-1): Scaling & Pembersihan Karang Gigi',
+        clinicianName: 'drg. Sarah Jenkins, Sp.KG',
+        ohisScore: 2.6,
+        note: 'Debris Index: 1.50, Calculus Index: 1.10. Educasi kontrol gula darah sebelum prosedur dan teknik menyikat gigi dua menit.',
+      },
+      {
+        offsetMonths: -2,
+        day: 9,
+        title: 'Kunjungan 2 (Bulan ke-3): Evaluasi Penyembuhan Gingiva',
+        clinicianName: 'drg. Sarah Jenkins, Sp.KG',
+        ohisScore: 1.9,
+        note: 'Edema gingiva berkurang signifikan, BOP tersisa pada region 36. Instruksi tambahan penggunaan interdental brush ukuran S.',
+      },
+      {
+        offsetDays: -21,
+        title: 'Kunjungan 3 (Bulan ke-5): Kontrol Berkala & Profilaksis',
+        clinicianName: 'drg. Sarah Jenkins, Sp.KG',
+        ohisScore: 1.4,
+        note: 'Profilaksis paste pada kuadran 3 dan 4. Pasien melaporkan menyikat gigi 2x sehari dan flossing 4x seminggu.',
+      },
+    ],
+  },
+}
+
+function roundSeed(value: number) {
+  return Math.round(value * 100) / 100
+}
+
+function clampScore(value: number) {
+  return roundSeed(Math.min(Math.max(value, 0), 3))
+}
+
+function scheduledAt(offsetDays: number, hour: number, minute: number) {
+  const now = new Date()
+  return new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + offsetDays, hour, minute),
+  )
+}
+
+function visitedOn(offsetMonths?: number, offsetDays?: number, day = 12) {
+  const now = new Date()
+  if (offsetMonths !== undefined) {
+    return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + offsetMonths, day))
+  }
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + (offsetDays ?? 0)))
+}
+
+function statusForIndex(index: number): MonitoringStatusValue {
+  if (kritisIndexes.has(index)) return 'kritis'
+  if (terlambatIndexes.has(index)) return 'terlambat'
+  if (perhatianIndexes.has(index)) return 'perlu_perhatian'
+  return 'terkontrol'
+}
+
+function checklistForIndex(index: number, status: MonitoringStatusValue) {
+  const ranges: Record<MonitoringStatusValue, [number, number]> = {
+    terkontrol: [88, 100],
+    perlu_perhatian: [78, 90],
+    terlambat: [62, 78],
+    kritis: [42, 58],
+  }
+  const [min, max] = ranges[status]
+  return min + ((index * 7) % (max - min + 1))
+}
+
+function scheduleOffsetForIndex(index: number, status: MonitoringStatusValue) {
+  if (status === 'terkontrol') return 3 + (index % 25)
+  if (status === 'perlu_perhatian') return 1 + (index % 10)
+  if (status === 'terlambat') return -(4 + (index % 40))
+  return kritisIndexes.has(index) && index % 2 === 1 ? 0 : -(45 + (index % 60))
+}
+
+function baselineForIndex(index: number, status: MonitoringStatusValue, current: number) {
+  if (status === 'kritis') return roundSeed(Math.max(0.2, current - 0.6))
+  if (status === 'terlambat') return roundSeed(current)
+  if (status === 'perlu_perhatian') return roundSeed(Math.min(current + 0.3 + (index % 2) * 0.3, 5))
+  if (index % 4 === 0) return roundSeed(current)
+  return roundSeed(Math.min(current + 0.6 + (index % 3) * 0.5, 5))
+}
+
+const DEMO_INBOX_MEDICAL_ID = 'DC-DOC-001'
+
+function minutesAgo(minutes: number) {
+  return new Date(Date.now() - minutes * 60_000)
+}
+
+function seedShortDate(value: Date | null) {
+  if (!value) return null
+  return new Intl.DateTimeFormat('id-ID', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  })
+    .format(value)
+    .replace('.', '')
+}
+
+async function seedInbox(
+  patients: { id: string, fullName: string }[],
+  rows: { patientId: string, status: MonitoringStatusValue, scheduledVisitAt: Date | null, reminderSentAt: Date | null }[],
+) {
+  const recipient = await prisma.healthWorker.findUnique({
+    where: { medicalId: DEMO_INBOX_MEDICAL_ID },
+    select: { id: true },
+  })
+  if (!recipient) return
+
+  const nameOf = new Map(patients.map(patient => [patient.id, patient.fullName]))
+  const risky = rows.filter(row => row.status === 'terlambat' || row.status === 'kritis')
+  const late = risky.filter(row => row.status === 'terlambat')
+  const read = rows.filter(row => row.status === 'terkontrol' && row.scheduledVisitAt)
+  const upcoming = read[0] ?? rows[0]
+  const second = read[1] ?? rows[1]
+
+  const inbox: {
+    recipientId: string
+    category: 'pengingat' | 'jadwal' | 'sistem'
+    title: string
+    body: string
+    patientId?: string | null
+    isRead: boolean
+    createdAt: Date
+    readAt?: Date | null
+  }[] = []
+
+  if (late[0]) {
+    inbox.push({
+      recipientId: recipient.id,
+      category: 'pengingat',
+      title: `Pengingat kontrol dikirim: ${nameOf.get(late[0].patientId) ?? 'pasien'}`,
+      body: `Pengingat in-app terkirim untuk jadwal kontrol ${seedShortDate(late[0].scheduledVisitAt) ?? 'belum ditetapkan'}. Pasien diminta mengonfirmasi kehadiran.`,
+      patientId: late[0].patientId,
+      isRead: false,
+      createdAt: minutesAgo(4),
+    })
+  }
+
+  if (upcoming) {
+    inbox.push({
+      recipientId: recipient.id,
+      category: 'jadwal',
+      title: `Jadwal kontrol ${nameOf.get(upcoming.patientId) ?? 'pasien'} diperbarui`,
+      body: `${seedShortDate(upcoming.scheduledVisitAt)} · pengingat in-app H-1 diaktifkan. Rencana kontrol sebelumnya pada rekam medis pasien otomatis digantikan.`,
+      patientId: upcoming.patientId,
+      isRead: false,
+      createdAt: minutesAgo(38),
+    })
+  }
+
+  inbox.push({
+    recipientId: recipient.id,
+    category: 'pengingat',
+    title: `Blast pengingat in-app: ${risky.length} pasien`,
+    body: `Pengingat kontrol dikirim ke ${risky.length} pasien berstatus terlambat dan kritis melalui kotak masuk in-app.`,
+    isRead: false,
+    createdAt: minutesAgo(95),
+  })
+
+  if (second) {
+    const when = minutesAgo(60 * 20)
+    inbox.push({
+      recipientId: recipient.id,
+      category: 'jadwal',
+      title: `Jadwal kontrol ${nameOf.get(second.patientId) ?? 'pasien'} diperbarui`,
+      body: `${seedShortDate(second.scheduledVisitAt)} · tanpa pengingat in-app. Pasien dijadwalkan ulang mengikuti ketersediaan dokter.`,
+      patientId: second.patientId,
+      isRead: true,
+      createdAt: when,
+      readAt: minutesAgo(60 * 19),
+    })
+  }
+
+  const scaled = read.filter(row => row.reminderSentAt)[0] ?? rows[rows.length - 1]
+  if (scaled) {
+    const when = minutesAgo(60 * 30)
+    inbox.push({
+      recipientId: recipient.id,
+      category: 'pengingat',
+      title: `Pengingat kontrol dikirim: ${nameOf.get(scaled.patientId) ?? 'pasien'}`,
+      body: `Pengingat in-app terkirim untuk jadwal kontrol ${seedShortDate(scaled.scheduledVisitAt) ?? 'belum ditetapkan'}. Konfirmasi kehadiran sudah diterima.`,
+      patientId: scaled.patientId,
+      isRead: true,
+      createdAt: when,
+      readAt: minutesAgo(60 * 28),
+    })
+  }
+
+  inbox.push({
+    recipientId: recipient.id,
+    category: 'sistem',
+    title: 'Rekap tren OHI-S program tersedia',
+    body: 'Ringkasan rata-rata skor OHI-S enam bulan terakhir berhasil dihitung dari data kunjungan pemantauan.',
+    isRead: true,
+    createdAt: minutesAgo(60 * 52),
+    readAt: minutesAgo(60 * 50),
+  })
+
+  await prisma.$transaction([
+    prisma.notification.deleteMany({ where: { recipientId: recipient.id } }),
+    prisma.notification.createMany({ data: inbox }),
+  ])
+
+  console.log(`Seeded ${inbox.length} in-app notifications (${inbox.filter(item => !item.isRead).length} belum dibaca)`)
+}
+
+async function seedMonitoring() {
+  const patients = await prisma.patient.findMany({
+    orderBy: { medicalRecordNo: 'desc' },
+    select: {
+      id: true,
+      medicalRecordNo: true,
+      fullName: true,
+      ohisScore: true,
+      debrisIndex: true,
+      calculusIndex: true,
+    },
+    take: MONITORING_TARGET,
+  })
+
+  if (patients.length < MONITORING_TARGET) {
+    console.warn(`Monitoring seed expects ${MONITORING_TARGET} patients, found ${patients.length}`)
+  }
+  if (patients.length === 0) return
+
+  await prisma.patientVisit.deleteMany({
+    where: {
+      patientId: { in: patients.map(patient => patient.id) },
+      OR: MONITORING_VISIT_PREFIXES.map(prefix => ({ title: { startsWith: prefix } })),
+    },
+  })
+
+  const monitoringRows: {
+    patientId: string
+    programName: string
+    status: MonitoringStatusValue
+    checklistPercent: number
+    baselineOhisScore: number
+    baselineDebrisIndex: number
+    baselineCalculusIndex: number
+    scheduledVisitAt: Date | null
+    scheduledVisitNote: string | null
+    reminderConfirmed: boolean
+    reminderSentAt: Date | null
+    doctorNote: string | null
+    validatedByClinician: string | null
+  }[] = []
+  const visitRows: {
+    patientId: string
+    visitDate: Date
+    title: string
+    clinicianName: string
+    ohisScore: number
+    note: string
+  }[] = []
+
+  for (const [index, patient] of patients.entries()) {
+    const featured = featuredPrograms[patient.medicalRecordNo]
+    const status = featured?.status ?? statusForIndex(index)
+    const currentOhis = roundSeed(featured?.current.ohisScore ?? patient.ohisScore ?? 1.4)
+    const currentDebris = featured?.current.debrisIndex ?? patient.debrisIndex ?? 0.8
+    const currentCalculus = featured?.current.calculusIndex ?? patient.calculusIndex ?? 0.6
+    const baselineOhis = featured?.baseline.ohisScore ?? baselineForIndex(index, status, currentOhis)
+    const drift = status === 'kritis' ? -0.3 : status === 'terlambat' ? 0 : 0.4 + (index % 3) * 0.3
+    const baselineDebris = featured
+      ? featured.baseline.debrisIndex
+      : clampScore(currentDebris + drift)
+    const baselineCalculus = featured
+      ? featured.baseline.calculusIndex
+      : clampScore(currentCalculus + drift * 0.8)
+
+    const offsetDays = featured
+      ? featured.scheduleOffsetDays
+      : scheduleOffsetForIndex(index, status)
+
+    monitoringRows.push({
+      patientId: patient.id,
+      programName: featured?.programName ?? MONITORING_PROGRAMS[index % MONITORING_PROGRAMS.length]!,
+      status,
+      checklistPercent: featured?.checklistPercent ?? checklistForIndex(index, status),
+      baselineOhisScore: roundSeed(baselineOhis),
+      baselineDebrisIndex: baselineDebris,
+      baselineCalculusIndex: baselineCalculus,
+      scheduledVisitAt: offsetDays === 0 ? null : scheduledAt(offsetDays, 8 + (index % 9), (index % 2) * 30),
+      scheduledVisitNote: featured?.scheduledVisitNote ?? MONITORING_PURPOSES[index % MONITORING_PURPOSES.length]!,
+      reminderConfirmed: status === 'terkontrol' ? index % 3 !== 0 : status !== 'kritis',
+      reminderSentAt:
+        status === 'terlambat' || status === 'kritis'
+          ? scheduledAt(-(2 + (index % 5)), 9, 0)
+          : null,
+      doctorNote: featured
+        ? featured.doctorNote
+        : MONITORING_DOCTOR_NOTES[status][index % MONITORING_DOCTOR_NOTES[status].length]!,
+      validatedByClinician: featured
+        ? featured.validatedByClinician
+        : MONITORING_VALIDATORS[index % MONITORING_VALIDATORS.length]!,
+    })
+
+    if (featured) {
+      for (const stage of featured.stages) {
+        visitRows.push({
+          patientId: patient.id,
+          visitDate: visitedOn(stage.offsetMonths, stage.offsetDays, stage.day),
+          title: stage.title,
+          clinicianName: stage.clinicianName,
+          ohisScore: stage.ohisScore,
+          note: stage.note,
+        })
+      }
+      await prisma.patient.update({
+        where: { id: patient.id },
+        data: {
+          ohisScore: currentOhis,
+          debrisIndex: currentDebris,
+          calculusIndex: currentCalculus,
+          ohisCategory: ohisCategoryOf(currentOhis),
+          lastVisitAt: visitedOn(undefined, -14),
+        },
+      })
+      continue
+    }
+
+    for (const monthsBack of [11, 10, 9, 8, 7, 6]) {
+      visitRows.push({
+        patientId: patient.id,
+        visitDate: visitedOn(-monthsBack, undefined, (index % 24) + 3),
+        title: 'Kunjungan Pemantauan Awal: Skrining OHI-S & Kalkulus',
+        clinicianName: clinicians[(index + 1) % clinicians.length]!,
+        ohisScore: Math.max(roundSeed(baselineOhis), 0.3),
+        note: 'Pencatatan skor awal program pemantauan sebagai acuan tren perkembangan oral hygiene.',
+      })
+    }
+    for (const [step, monthsBack] of [5, 4, 3, 2, 1].entries()) {
+      const value = roundSeed(baselineOhis + ((currentOhis - baselineOhis) * (step + 1)) / 6)
+      visitRows.push({
+        patientId: patient.id,
+        visitDate: visitedOn(-monthsBack, undefined, (index % 24) + 3),
+        title: 'Kunjungan Pemantauan Berkala: Evaluasi OHI-S & Pembersihan',
+        clinicianName: clinicians[index % clinicians.length]!,
+        ohisScore: Math.max(value, 0.2),
+        note: `Debris Index: ${baselineDebris.toFixed(2)}, Calculus Index: ${baselineCalculus.toFixed(2)}. Kontrol kebersihan mulut dievaluasi pada sesi rutin program.`,
+      })
+    }
+    visitRows.push({
+      patientId: patient.id,
+      visitDate: visitedOn(undefined, -(2 + (index % 20))),
+      title: 'Kunjungan Pemantauan Terkini: Kontrol Kepatuhan & Skor OHI-S',
+      clinicianName: clinicians[(index + 2) % clinicians.length]!,
+      ohisScore: currentOhis,
+      note: `Skor terkini OHI-S ${currentOhis.toFixed(2)} dengan kategori ${ohisCategoryOf(currentOhis)}.`,
+    })
+  }
+
+  await prisma.$transaction([
+    prisma.patientMonitoring.deleteMany({ where: { patientId: { in: patients.map(p => p.id) } } }),
+    prisma.patientMonitoring.createMany({ data: monitoringRows }),
+    prisma.patientVisit.createMany({ data: visitRows }),
+  ])
+
+  console.log(
+    `Seeded ${monitoringRows.length} monitoring programs and ${visitRows.length} monitoring visits`,
+  )
+
+  await seedInbox(
+    patients.map(patient => ({ id: patient.id, fullName: patient.fullName })),
+    monitoringRows.map(row => ({
+      patientId: row.patientId,
+      status: row.status,
+      scheduledVisitAt: row.scheduledVisitAt,
+      reminderSentAt: row.reminderSentAt,
+    })),
+  )
+}
+
 async function main() {
   await prisma.$transaction(
     staff.map((worker) =>
@@ -803,6 +1301,7 @@ async function main() {
   console.log(`Seeded ${staff.length} health workers`)
   await seedPatients()
   await seedExamination()
+  await seedMonitoring()
 }
 
 main()

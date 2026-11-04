@@ -3,6 +3,7 @@ import { headerRoleLabel, initialsOf } from '~~/shared/types/auth'
 import { roleLabel, statusLabel } from '~~/shared/types/health-worker'
 import { Bell, ChevronDown, House, LogOut, Settings } from 'lucide-vue-next'
 import { useLogoutMutation } from '~/composables/queries/useAuthQueries'
+import { useNotificationStatsQuery } from '~/composables/queries/useNotificationQueries'
 
 const route = useRoute()
 const title = computed(() => (typeof route.meta.title === 'string' ? route.meta.title : 'Dashboard'))
@@ -10,6 +11,9 @@ const today = ref('')
 
 const { user } = useAuthSession()
 const logoutMutation = useLogoutMutation()
+
+const notificationStats = useNotificationStatsQuery()
+const unreadCount = computed(() => notificationStats.data.value?.data.unread ?? 0)
 
 const initials = computed(() => (user.value ? initialsOf(user.value.fullName) : 'DM'))
 const subtitle = computed(() => {
@@ -44,14 +48,21 @@ onMounted(() => {
       </span>
       <span class="hidden h-5 w-px bg-border-subtle lg:block" aria-hidden="true" />
 
-      <button
-        type="button"
+      <NuxtLink
+        to="/notifikasi"
         class="relative rounded-lg p-2 text-text-secondary transition-colors hover:bg-surface-container-low hover:text-text-primary"
         aria-label="Notifikasi"
+        :title="unreadCount > 0 ? `${unreadCount} notifikasi belum dibaca` : 'Tidak ada notifikasi baru'"
       >
         <Bell class="size-[22px]" aria-hidden="true" />
-        <span class="absolute right-1.5 top-1.5 size-2 rounded-full bg-status-danger ring-2 ring-white" aria-hidden="true" />
-      </button>
+        <span
+          v-if="unreadCount > 0"
+          class="absolute right-1 top-1 flex min-w-4 items-center justify-center rounded-full bg-status-danger px-1 font-caption text-caption font-semibold leading-4 text-on-primary ring-2 ring-white"
+          aria-hidden="true"
+        >
+          {{ unreadCount > 9 ? '9+' : unreadCount }}
+        </span>
+      </NuxtLink>
 
       <span class="h-5 w-px bg-border-subtle" aria-hidden="true" />
 

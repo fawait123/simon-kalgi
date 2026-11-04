@@ -2,6 +2,7 @@
 import {
   BadgeCheck,
   Bell,
+  HeartPulse,
   LayoutGrid,
   LogOut,
   Settings,
@@ -9,23 +10,28 @@ import {
   Users,
 } from 'lucide-vue-next'
 import { useLogoutMutation } from '~/composables/queries/useAuthQueries'
+import { useNotificationStatsQuery } from '~/composables/queries/useNotificationQueries'
 
 const mainNav = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutGrid },
   { to: '/pasien', label: 'Data Pasien', icon: Users },
   { to: '/petugas', label: 'Data Petugas Kesehatan', icon: BadgeCheck },
   { to: '/pemeriksaan', label: 'Pemeriksaan Gigi & Mulut', icon: Smile },
-  // { to: '/penilaian-kalkulus', label: 'Penilaian Kalkulus', icon: BarChart3 },
-  // { to: '/monitoring', label: 'Monitoring Pasien', icon: HeartPulse },
-  // { to: '/rekomendasi', label: 'Rekomendasi Perawatan', icon: ClipboardCheck },
+  { to: '/monitoring', label: 'Monitoring Pasien', icon: HeartPulse },
 ]
 
 const systemNav = [
-  { to: '/notifikasi', label: 'Notifikasi', icon: Bell, badge: '3' },
+  { to: '/notifikasi', label: 'Notifikasi', icon: Bell },
   { to: '/pengaturan', label: 'Pengaturan Akun', icon: Settings },
 ]
 
 const logoutMutation = useLogoutMutation()
+
+const statsQuery = useNotificationStatsQuery()
+const unreadBadge = computed(() => {
+  const unread = statsQuery.data.value?.data.unread ?? 0
+  return unread > 0 ? String(unread) : undefined
+})
 </script>
 
 <template>
@@ -60,7 +66,7 @@ const logoutMutation = useLogoutMutation()
       </p>
       <nav class="flex flex-col gap-1 px-space-sm">
         <LayoutAdminNavItem v-for="item in systemNav" :key="item.to" :to="item.to" :label="item.label" :icon="item.icon"
-          :badge="item.badge" />
+          :badge="item.to === '/notifikasi' ? unreadBadge : undefined" />
         <button type="button"
           class="flex items-center gap-space-sm rounded-lg px-space-md py-2.5 text-left font-body-md text-body-md text-status-danger transition-colors hover:bg-status-danger-bg"
           :disabled="logoutMutation.isPending.value" @click="logoutMutation.mutate()">

@@ -1,5 +1,7 @@
 import type { ExaminationListQuery } from '~~/shared/schemas/examination.schema'
 import type { HealthWorkerListQuery } from '~~/shared/schemas/health-worker.schema'
+import type { MonitoringListQuery, MonitoringTrendRange } from '~~/shared/schemas/monitoring.schema'
+import type { NotificationListQuery } from '~~/shared/schemas/notification.schema'
 import type { PatientListQuery } from '~~/shared/schemas/patient.schema'
 
 export const healthWorkerKeys = {
@@ -28,4 +30,22 @@ export const examinationKeys = {
   detail: (id: string) => [...examinationKeys.details(), id] as const,
   latest: () => [...examinationKeys.all, 'latest'] as const,
   latestFor: (patientId: string) => [...examinationKeys.latest(), patientId] as const,
+}
+
+export const monitoringKeys = {
+  all: ['monitoring'] as const,
+  lists: () => [...monitoringKeys.all, 'list'] as const,
+  list: (params: MonitoringListQuery) => [...monitoringKeys.lists(), params] as const,
+  details: () => [...monitoringKeys.all, 'detail'] as const,
+  detail: (patientId: string) => [...monitoringKeys.details(), patientId] as const,
+  stats: () => [...monitoringKeys.all, 'stats'] as const,
+  trends: () => [...monitoringKeys.all, 'trend'] as const,
+  trend: (range: MonitoringTrendRange) => [...monitoringKeys.trends(), range] as const,
+}
+
+export const notificationKeys = {
+  all: ['notifications'] as const,
+  lists: () => [...notificationKeys.all, 'list'] as const,
+  list: (params: NotificationListQuery) => [...notificationKeys.lists(), params] as const,
+  stats: () => [...notificationKeys.all, 'stats'] as const,
 }

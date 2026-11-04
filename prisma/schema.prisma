@@ -55,6 +55,13 @@ enum ControlPriority {
   urgent
 }
 
+enum MonitoringStatus {
+  terkontrol
+  perlu_perhatian
+  terlambat
+  kritis
+}
+
 enum ToothCondition {
   sehat
   karies
@@ -78,6 +85,12 @@ enum HeartRhythm {
 enum ExaminationStatus {
   draft
   final
+}
+
+enum NotificationCategory {
+  pengingat
+  jadwal
+  sistem
 }
 
 model HealthWorker {
@@ -106,7 +119,8 @@ model HealthWorker {
   createdAt        DateTime         @default(now()) @map("created_at")
   updatedAt        DateTime         @updatedAt @map("updated_at")
 
-  examinations Examination[]
+  examinations  Examination[]
+  notifications Notification[]
 
   @@index([role])
   @@index([status])
@@ -213,8 +227,10 @@ model Patient {
   createdAt          DateTime        @default(now()) @map("created_at")
   updatedAt          DateTime        @updatedAt @map("updated_at")
 
-  visits      PatientVisit[]
-  examinations Examination[]
+  visits        PatientVisit[]
+  examinations  Examination[]
+  monitoring    PatientMonitoring?
+  notifications Notification[]
 
   @@index([gender])
   @@index([ohisCategory])
@@ -229,6 +245,7 @@ model PatientVisit {
   title         String   @db.VarChar(160)
   clinicianName String   @map("clinician_name") @db.VarChar(120)
   ohisScore     Float?   @map("ohis_score")
+  note          String?  @db.VarChar(500)
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
@@ -236,4 +253,50 @@ model PatientVisit {
 
   @@index([patientId, visitDate])
   @@map("patient_visits")
+}
+
+model PatientMonitoring {
+  id                    String           @id @default(uuid()) @db.Uuid
+  patientId             String           @unique @map("patient_id") @db.Uuid
+  programName           String           @map("program_name") @db.VarChar(120)
+  status                MonitoringStatus @default(terkontrol)
+  checklistPercent      Int              @default(0) @map("checklist_percent")
+  baselineOhisScore     Float?           @map("baseline_ohis_score")
+  baselineDebrisIndex   Float?           @map("baseline_debris_index")
+  baselineCalculusIndex Float?           @map("baseline_calculus_index")
+  scheduledVisitAt      DateTime?        @map("scheduled_visit_at")
+  scheduledVisitNote    String?          @map("scheduled_visit_note") @db.VarChar(120)
+  reminderConfirmed     Boolean          @default(false) @map("reminder_confirmed")
+  reminderSentAt        DateTime?        @map("reminder_sent_at")
+  doctorNote            String?          @map("doctor_note") @db.VarChar(500)
+  validatedByClinician  String?          @map("validated_by_clinician") @db.VarChar(120)
+  createdAt             DateTime         @default(now()) @map("created_at")
+  updatedAt             DateTime         @updatedAt @map("updated_at")
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([scheduledVisitAt])
+  @@map("patient_monitorings")
+}
+
+model Notification {
+  id          String               @id @default(uuid()) @db.Uuid
+  recipientId String               @map("recipient_id") @db.Uuid
+  category    NotificationCategory @default(pengingat)
+  title       String               @db.VarChar(120)
+  body        String               @db.VarChar(400)
+  patientId   String?              @map("patient_id") @db.Uuid
+  link        String?              @db.VarChar(160)
+  isRead      Boolean              @default(false) @map("is_read")
+  readAt      DateTime?            @map("read_at")
+  createdAt   DateTime             @default(now()) @map("created_at")
+  updatedAt   DateTime             @updatedAt @map("updated_at")
+
+  recipient HealthWorker @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+  patient   Patient?     @relation(fields: [patientId], references: [id], onDelete: SetNull)
+
+  @@index([recipientId, isRead])
+  @@index([recipientId, createdAt])
+  @@map("notifications")
 }
