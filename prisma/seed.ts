@@ -1,5 +1,7 @@
 import { PrismaClient } from '@prisma/client'
 import { hashSync } from 'bcryptjs'
+import { seedCareChecklist } from './seed-care'
+import { seedPatientInbox } from './seed-patient-inbox'
 
 const prisma = new PrismaClient()
 
@@ -217,6 +219,32 @@ const staff = [
     dutyDays: 'Setiap Hari Kerja',
     dutyTime: 'Shift Pagi (07:30 - 15:30)',
     status: 'nonaktif',
+    isPic: false,
+    avatarUrl: null,
+  },
+  {
+    medicalId: 'DC-ADM-001',
+    fullName: 'Rina Kartika, A.Md.RMIK',
+    nik: '3271011007900009',
+    birthDate: new Date('1990-07-10'),
+    gender: 'P',
+    employmentStatus: 'tetap',
+    role: 'umum',
+    specialization: 'Rekam Medis & Administrasi Klinik',
+    strNumber: '31.1.1.100.1.19.246801',
+    strExpiryDate: new Date('2029-04-30'),
+    sipNumber: 'SIP-ADM-01199',
+    sipIssuer: 'Dinas Kesehatan Kota Bandung',
+    kkiNumber: null,
+    bio: 'Administrator klinik pengelola tarif, data pasien, dan konfigurasi sistem.',
+    phone: '081122339900',
+    email: 'admin.klinik@dentacare.id',
+    address: 'Jl. Dago No. 45, Bandung',
+    username: 'adm.klinik',
+    accessLevel: 'admin',
+    dutyDays: 'Senin - Jumat',
+    dutyTime: 'Kantor (08:00 - 16:00)',
+    status: 'aktif',
     isPic: false,
     avatarUrl: null,
   },
@@ -669,10 +697,11 @@ async function seedPatients() {
 
   for (const patient of patients) {
     const { visits, ...record } = patient
+    const data = { ...record, passwordHash }
     const saved = await prisma.patient.upsert({
       where: { medicalRecordNo: record.medicalRecordNo },
-      update: record,
-      create: record,
+      update: data,
+      create: data,
     })
     await prisma.patientVisit.deleteMany({ where: { patientId: saved.id } })
     if (visits.length > 0) {
@@ -823,7 +852,7 @@ async function seedExamination() {
 }
 
 /**
- * Data demo halaman /dashboard: pemeriksaan final tersebar 6 bulan ke belakang supaya grafik
+ * Data demo halaman /admin/dashboard: pemeriksaan final tersebar 6 bulan ke belakang supaya grafik
  * tren, donut OHI-S, dan tabel rekam terbaru punya angka nyata.
  *
  * Sengaja tidak menghapus apa pun: generator hanya mengisi sampai DEMO_EXAM_TOTAL, jadi
@@ -1491,6 +1520,8 @@ async function main() {
   await seedExamination()
   await seedDashboardExaminations()
   await seedMonitoring()
+  await seedCareChecklist(prisma)
+  await seedPatientInbox(prisma)
 }
 
 main()

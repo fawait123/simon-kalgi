@@ -15,10 +15,19 @@ const logoutMutation = useLogoutMutation()
 const notificationStats = useNotificationStatsQuery()
 const unreadCount = computed(() => notificationStats.data.value?.data.unread ?? 0)
 
+const staffUser = computed(() => (user.value?.scope === 'staff' ? user.value : null))
 const initials = computed(() => (user.value ? initialsOf(user.value.fullName) : 'DM'))
 const subtitle = computed(() => {
   if (!user.value) return 'Tamu'
-  return `${headerRoleLabel[user.value.accessLevel]} • ${statusLabel[user.value.status]}`
+  const staff = staffUser.value
+  return staff
+    ? `${headerRoleLabel[staff.accessLevel]} • ${statusLabel[staff.status]}`
+    : 'Portal Pasien'
+})
+const accountLine = computed(() => {
+  const staff = staffUser.value
+  if (staff) return `${staff.medicalId} • ${roleLabel[staff.role]}`
+  return user.value?.medicalId ?? 'Sesi tidak aktif'
 })
 
 onMounted(() => {
@@ -47,7 +56,7 @@ onMounted(() => {
       </span>
       <span class="hidden h-5 w-px bg-border-subtle lg:block" aria-hidden="true" />
 
-      <NuxtLink to="/notifikasi"
+      <NuxtLink to="/admin/notifikasi"
         class="relative rounded-lg p-2 text-text-secondary transition-colors hover:bg-surface-container-low hover:text-text-primary"
         aria-label="Notifikasi"
         :title="unreadCount > 0 ? `${unreadCount} notifikasi belum dibaca` : 'Tidak ada notifikasi baru'">
@@ -65,7 +74,7 @@ onMounted(() => {
         <DropdownMenuTrigger
           class="flex items-center gap-space-sm rounded-lg pl-space-xs outline-none transition-colors hover:bg-surface-container-low focus-visible:ring-2 focus-visible:ring-ring">
           <Avatar class="size-8">
-            <AvatarImage v-if="user?.avatarUrl" :src="user.avatarUrl" :alt="user.fullName" />
+            <AvatarImage v-if="staffUser?.avatarUrl" :src="staffUser.avatarUrl" :alt="staffUser.fullName" />
             <AvatarFallback class="bg-primary-surface font-label-sm text-label-sm text-primary">
               {{ initials }}
             </AvatarFallback>
@@ -85,12 +94,12 @@ onMounted(() => {
               {{ user?.fullName ?? 'Belum masuk' }}
             </p>
             <p class="font-caption text-caption text-text-muted">
-              {{ user ? `${user.medicalId} • ${roleLabel[user.role]}` : 'Sesi tidak aktif' }}
+              {{ accountLine }}
             </p>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem as-child>
-            <NuxtLink to="/pengaturan" class="flex w-full items-center gap-2">
+            <NuxtLink to="/admin/pengaturan" class="flex w-full items-center gap-2">
               <Settings class="size-4" aria-hidden="true" />
               Pengaturan Akun
             </NuxtLink>

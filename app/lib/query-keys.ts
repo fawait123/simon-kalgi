@@ -61,3 +61,17 @@ export const dashboardKeys = {
   all: ['dashboard'] as const,
   summary: () => [...dashboardKeys.all, 'summary'] as const,
 }
+
+export const patientCareKeys = {
+  all: ['patient-care'] as const,
+  checklist: () => [...patientCareKeys.all, 'checklist'] as const,
+}
+
+// Root-nya sengaja tidak dinest di bawah patientCareKeys: invalidasi setelah centang checklist
+// akan ikut menarik ulang feed notifikasi bila keduanya berbagi prefix.
+export const patientNotificationKeys = {
+  all: ['patient-notifications'] as const,
+  lists: () => [...patientNotificationKeys.all, 'list'] as const,
+  list: (params: NotificationListQuery) => [...patientNotificationKeys.lists(), params] as const,
+  stats: () => [...patientNotificationKeys.all, 'stats'] as const,
+}

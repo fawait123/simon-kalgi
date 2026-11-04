@@ -42,9 +42,10 @@ export function useUpdateAccountProfileMutation() {
       queryClient.invalidateQueries({ queryKey: accountKeys.stats() })
       queryClient.invalidateQueries({ queryKey: healthWorkerKeys.lists() })
       queryClient.invalidateQueries({ queryKey: healthWorkerKeys.stats() })
-      if (user.value) {
+      const session = user.value
+      if (session?.scope === 'staff') {
         setSession({
-          ...user.value,
+          ...session,
           fullName: profile.fullName,
           email: profile.email,
           role: profile.role,

@@ -43,7 +43,7 @@ defineProps<{
         Terbuka untuk pengembangan bertahap
       </p>
       <Button as-child variant="outline">
-        <NuxtLink to="/petugas">Kembali ke Data Petugas Kesehatan</NuxtLink>
+        <NuxtLink to="/admin/dashboard">Kembali ke Dashboard</NuxtLink>
       </Button>
     </div>
   </section>

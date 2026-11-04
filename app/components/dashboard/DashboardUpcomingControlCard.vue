@@ -162,7 +162,7 @@ type="button" variant="outline" size="xs" class="gap-1.5 rounded-lg text-text-se
               <Button
 type="button" variant="ghost" size="xs"
                 class="gap-1.5 rounded-lg text-text-secondary" :aria-label="`Ubah jadwal kontrol ${row.fullName}`"
-                @click="navigateTo('/monitoring')">
+                @click="navigateTo('/admin/monitoring')">
                 Reschedule
               </Button>
             </div>

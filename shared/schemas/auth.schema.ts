@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
-export const loginRoleSchema = z.enum(['nakes', 'admin', 'pasien'], {
+// 'nakes' = satu tab untuk dokter, perawat, dan admin klinik.
+export const loginRoleSchema = z.enum(['nakes', 'pasien'], {
   errorMap: () => ({ message: 'Pilih peran akun untuk masuk' }),
 })
 

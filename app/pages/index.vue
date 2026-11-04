@@ -1,3 +1,3 @@
 <script setup lang="ts">
-definePageMeta({ redirect: '/petugas' })
+definePageMeta({ redirect: '/admin/dashboard' })
 </script>

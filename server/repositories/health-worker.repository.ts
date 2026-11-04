@@ -99,6 +99,14 @@ export const healthWorkerRepository = {
     return client.healthWorker.findUnique({ where: { id }, select: healthWorkerSessionSelect })
   },
 
+  /** Untuk guard level akses: selalu dibaca dari basis data, tidak pernah dari cookie. */
+  findSessionAccess(id: string, client: DBClient = prisma) {
+    return client.healthWorker.findUnique({
+      where: { id },
+      select: { accessLevel: true, status: true },
+    })
+  },
+
   findAccountProfile(id: string, client: DBClient = prisma) {
     return client.healthWorker.findUnique({ where: { id }, select: healthWorkerAccountSelect })
   },

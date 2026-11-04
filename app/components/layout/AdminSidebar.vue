@@ -10,22 +10,27 @@ import {
   Smile,
   Users,
 } from 'lucide-vue-next'
+import { isRouteAllowed } from '~~/shared/config/access'
 import { useLogoutMutation } from '~/composables/queries/useAuthQueries'
 import { useNotificationStatsQuery } from '~/composables/queries/useNotificationQueries'
 
 const mainNav = [
-  { to: '/dashboard', label: 'Dashboard', icon: LayoutGrid },
-  { to: '/pasien', label: 'Data Pasien', icon: Users },
-  { to: '/petugas', label: 'Data Petugas Kesehatan', icon: BadgeCheck },
-  { to: '/pemeriksaan', label: 'Pemeriksaan Gigi & Mulut', icon: Smile },
-  { to: '/rekam-pemeriksaan', label: 'Seluruh Rekam Pasien', icon: FolderHeart },
-  { to: '/monitoring', label: 'Monitoring Pasien', icon: HeartPulse },
+  { to: '/admin/dashboard', label: 'Dashboard', icon: LayoutGrid },
+  { to: '/admin/pasien', label: 'Data Pasien', icon: Users },
+  { to: '/admin/petugas', label: 'Data Petugas Kesehatan', icon: BadgeCheck },
+  { to: '/admin/pemeriksaan', label: 'Pemeriksaan Gigi & Mulut', icon: Smile },
+  { to: '/admin/rekam-pemeriksaan', label: 'Seluruh Rekam Pasien', icon: FolderHeart },
+  { to: '/admin/monitoring', label: 'Monitoring Pasien', icon: HeartPulse },
 ]
 
 const systemNav = [
-  { to: '/notifikasi', label: 'Notifikasi', icon: Bell },
-  { to: '/pengaturan', label: 'Pengaturan Akun', icon: Settings },
+  { to: '/admin/notifikasi', label: 'Notifikasi', icon: Bell },
+  { to: '/admin/pengaturan', label: 'Pengaturan Akun', icon: Settings },
 ]
+
+const { user } = useAuthSession()
+const visibleMainNav = computed(() => mainNav.filter(item => isRouteAllowed(item.to, user.value)))
+const visibleSystemNav = computed(() => systemNav.filter(item => isRouteAllowed(item.to, user.value)))
 
 const logoutMutation = useLogoutMutation()
 
@@ -58,7 +63,7 @@ const unreadBadge = computed(() => {
         Menu Utama
       </p>
       <nav class="flex flex-col gap-1 px-space-sm">
-        <LayoutAdminNavItem v-for="item in mainNav" :key="item.to" :to="item.to" :label="item.label"
+        <LayoutAdminNavItem v-for="item in visibleMainNav" :key="item.to" :to="item.to" :label="item.label"
           :icon="item.icon" />
       </nav>
 
@@ -67,8 +72,8 @@ const unreadBadge = computed(() => {
         Sistem
       </p>
       <nav class="flex flex-col gap-1 px-space-sm">
-        <LayoutAdminNavItem v-for="item in systemNav" :key="item.to" :to="item.to" :label="item.label" :icon="item.icon"
-          :badge="item.to === '/notifikasi' ? unreadBadge : undefined" />
+        <LayoutAdminNavItem v-for="item in visibleSystemNav" :key="item.to" :to="item.to" :label="item.label"
+          :icon="item.icon" :badge="item.to === '/admin/notifikasi' ? unreadBadge : undefined" />
         <button type="button"
           class="flex items-center gap-space-sm rounded-lg px-space-md py-2.5 text-left font-body-md text-body-md text-status-danger transition-colors hover:bg-status-danger-bg"
           :disabled="logoutMutation.isPending.value" @click="logoutMutation.mutate()">

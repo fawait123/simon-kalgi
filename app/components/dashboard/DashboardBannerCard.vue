@@ -40,7 +40,7 @@ v-if="monthLabel"
       </span>
       <Button
 type="button" class="gap-2 rounded-lg text-label-md shadow-sm"
-        @click="navigateTo('/pemeriksaan')">
+        @click="navigateTo('/admin/pemeriksaan')">
         <Plus class="size-4" aria-hidden="true" />
         Pemeriksaan Baru
       </Button>

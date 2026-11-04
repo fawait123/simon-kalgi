@@ -404,6 +404,12 @@ export const monitoringService = {
       scheduledVisitAt,
       withReminder: input.sendReminder,
     })
+    await notificationService.notifyPatientSchedule({
+      patientId: patient.id,
+      scheduledVisitAt,
+      purpose: input.purpose,
+      withReminder: input.sendReminder,
+    })
 
     return {
       id: monitoring.id,
@@ -422,6 +428,10 @@ export const monitoringService = {
       recipientId: actor.userId,
       patientId: updated.patientId,
       patientName: updated.patient.fullName,
+      scheduledVisitAt: updated.scheduledVisitAt,
+    })
+    await notificationService.notifyPatientReminder({
+      patientId: updated.patientId,
       scheduledVisitAt: updated.scheduledVisitAt,
     })
 

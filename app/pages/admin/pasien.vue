@@ -78,7 +78,7 @@ function startExamination(patient: PatientDto) {
   toast('Membuka Pemeriksaan', {
     description: `Mengalihkan ke modul odontogram & kalkulus untuk ${patient.medicalRecordNo}.`,
   })
-  navigateTo('/pemeriksaan')
+  navigateTo('/admin/pemeriksaan')
 }
 
 function resetFilters() {

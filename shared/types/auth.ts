@@ -1,10 +1,17 @@
 import type { AccessLevel, HealthWorkerRole, WorkerStatus } from '@prisma/client'
 import type { LoginRole } from '~~/shared/schemas/auth.schema'
 
-export interface AuthUser {
+export type SessionScope = 'staff' | 'patient'
+
+interface AuthUserBase {
   id: string
   medicalId: string
   fullName: string
+  scope: SessionScope
+}
+
+export interface StaffAuthUser extends AuthUserBase {
+  scope: 'staff'
   username: string
   email: string
   role: HealthWorkerRole
@@ -16,6 +23,13 @@ export interface AuthUser {
   dutyDays: string
   dutyTime: string
 }
+
+/** `medicalId` pasien adalah `medicalRecordNo`, supaya penampil sesi lama tidak perlu bercabang. */
+export interface PatientAuthUser extends AuthUserBase {
+  scope: 'patient'
+}
+
+export type AuthUser = StaffAuthUser | PatientAuthUser
 
 export interface AuthSessionResponse {
   data: AuthUser | null
@@ -41,21 +55,12 @@ export interface LoginRoleConfig {
 export const loginRoleConfigs: Record<LoginRole, LoginRoleConfig> = {
   nakes: {
     value: 'nakes',
-    label: 'Petugas Kesehatan',
-    identifierLabel: 'ID Tenaga Medis / Username / Email SIP',
-    placeholder: 'contoh: drg.sarah atau sarah.jenkins@dentacare.id',
-    cta: 'Masuk ke Dashboard Medis',
+    label: 'Petugas / Admin',
+    identifierLabel: 'ID Tenaga Medis / Username / Email',
+    placeholder: 'contoh: drg.sarah, ns.dimas, atau adm.klinik',
+    cta: 'Masuk ke Konsol Klinik',
     description:
-      'Silakan masukkan kredensial akun dokter atau perawat gigi untuk mengelola odontogram dan rekam medis pasien.',
-  },
-  admin: {
-    value: 'admin',
-    label: 'Administrator',
-    identifierLabel: 'Username / Email Administrator Klinik',
-    placeholder: 'contoh: admin.klinik@dentacare.id atau adm-dentacare',
-    cta: 'Masuk ke Konsol Administrasi',
-    description:
-      'Masukkan kredensial administrator klinik untuk pengaturan tarif, staf, dan konfigurasi sistem.',
+      'Masuk sebagai dokter, perawat gigi, atau administrator klinik untuk mengelola odontogram, rekam medis, dan data klinik.',
   },
   pasien: {
     value: 'pasien',
@@ -64,11 +69,11 @@ export const loginRoleConfigs: Record<LoginRole, LoginRoleConfig> = {
     placeholder: 'contoh: RM-2025-0142 atau budi@email.com',
     cta: 'Masuk ke Portal Pasien',
     description:
-      'Lihat status odontogram mandiri, riwayat kontrol, edukasi periodonsia, dan jadwal kunjungan Anda.',
+      'Masuk memakai nomor rekam medis, NIK, atau email terdaftar untuk membuka portal kunjungan Anda. Modul portal masih dalam pengembangan.',
   },
 }
 
-export const loginRoleOrder: LoginRole[] = ['nakes', 'admin', 'pasien']
+export const loginRoleOrder: LoginRole[] = ['nakes', 'pasien']
 
 export const headerRoleLabel: Record<AccessLevel, string> = {
   dokter: 'Dokter Gigi',

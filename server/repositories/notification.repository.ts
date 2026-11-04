@@ -24,6 +24,13 @@ export type NotificationPageRecord = Prisma.NotificationGetPayload<{
   select: typeof notificationPageSelect
 }>
 
+/**
+ * Kotak masuk satu tabel dimiliki dua jenis akun, jadi setiap pembacaan wajib menyebut
+ * pemiliknya lewat tepat satu kolom. Union (bukan object dengan dua field opsional) membuat
+ * `{ recipientId: undefined }` tidak mungkin lolos tipe.
+ */
+export type NotificationInboxOwner = { recipientId: string } | { recipientPatientId: string }
+
 export const notificationRepository = {
   findPage(where: Prisma.NotificationWhereInput, skip: number, take: number) {
     return prisma.$transaction([
@@ -38,9 +45,9 @@ export const notificationRepository = {
     ])
   },
 
-  findById(id: string, recipientId: string) {
+  findById(id: string, owner: NotificationInboxOwner) {
     return prisma.notification.findFirst({
-      where: { id, recipientId },
+      where: { id, ...owner },
       select: notificationPageSelect,
     })
   },
@@ -52,31 +59,31 @@ export const notificationRepository = {
     })
   },
 
-  markRead(id: string, recipientId: string, readAt: Date) {
+  markRead(id: string, owner: NotificationInboxOwner, readAt: Date) {
     return prisma.notification.updateMany({
-      where: { id, recipientId, isRead: false },
+      where: { id, ...owner, isRead: false },
       data: { isRead: true, readAt },
     })
   },
 
-  markAllRead(recipientId: string, readAt: Date) {
+  markAllRead(owner: NotificationInboxOwner, readAt: Date) {
     return prisma.notification.updateMany({
-      where: { recipientId, isRead: false },
+      where: { ...owner, isRead: false },
       data: { isRead: true, readAt },
     })
   },
 
-  countByRead(recipientId: string) {
+  countByRead(owner: NotificationInboxOwner) {
     return prisma.notification.groupBy({
       by: ['isRead'],
-      where: { recipientId },
+      where: { ...owner },
       _count: { _all: true },
     })
   },
 
-  findRecent(recipientId: string, title: string, since: Date) {
+  findRecent(owner: NotificationInboxOwner, title: string, since: Date) {
     return prisma.notification.findFirst({
-      where: { recipientId, title, createdAt: { gte: since } },
+      where: { ...owner, title, createdAt: { gte: since } },
       select: { id: true },
     })
   },

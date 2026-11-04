@@ -43,6 +43,20 @@ export const patientVisitSelect = {
   updatedAt: true,
 } satisfies Prisma.PatientVisitSelect
 
+/** Dipakai hanya oleh findByCredential; `password_hash` tidak pernah keluar ke API. */
+export const patientAuthSelect = {
+  id: true,
+  medicalRecordNo: true,
+  fullName: true,
+  passwordHash: true,
+} satisfies Prisma.PatientSelect
+
+export const patientSessionSelect = {
+  id: true,
+  medicalRecordNo: true,
+  fullName: true,
+} satisfies Prisma.PatientSelect
+
 type DBClient = Prisma.TransactionClient | typeof prisma
 
 export const patientRepository = {
@@ -89,6 +103,24 @@ export const patientRepository = {
       orderBy: { medicalRecordNo: 'desc' },
       select: { medicalRecordNo: true },
     })
+  },
+
+  findByCredential(identifier: string, client: DBClient = prisma) {
+    return client.patient.findFirst({
+      where: {
+        OR: [
+          { medicalRecordNo: { equals: identifier, mode: 'insensitive' } },
+          // `nik` bertipe Char(16): Postgres membandingkan bpchar tanpa spasi penutup, jadi `equals` tetap cocok.
+          { nik: { equals: identifier } },
+          { email: { equals: identifier, mode: 'insensitive' } },
+        ],
+      },
+      select: patientAuthSelect,
+    })
+  },
+
+  findSessionUser(id: string, client: DBClient = prisma) {
+    return client.patient.findUnique({ where: { id }, select: patientSessionSelect })
   },
 
   create(data: Prisma.PatientCreateInput, client: DBClient = prisma) {

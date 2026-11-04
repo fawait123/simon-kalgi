@@ -169,7 +169,7 @@ class="inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-caption font
         <button
 type="button"
           class="flex cursor-pointer items-center gap-1.5 rounded text-label-md font-semibold text-primary transition-colors hover:text-primary-hover"
-          @click="navigateTo('/rekam-pemeriksaan')">
+          @click="navigateTo('/admin/rekam-pemeriksaan')">
           Lihat Seluruh Rekam Pasien
           <ArrowRight class="size-4" aria-hidden="true" />
         </button>

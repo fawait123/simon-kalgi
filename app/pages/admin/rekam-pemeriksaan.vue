@@ -156,7 +156,7 @@ function resetFilters() {
       <Button
         type="button"
         class="flex shrink-0 items-center gap-2 self-start rounded-lg font-label-md text-label-md shadow-sm active:scale-[0.98] lg:self-auto"
-        @click="navigateTo('/pemeriksaan')"
+        @click="navigateTo('/admin/pemeriksaan')"
       >
         <Plus class="size-4.5" aria-hidden="true" />
         Pemeriksaan Baru

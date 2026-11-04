@@ -5,7 +5,7 @@ export default defineEventHandler(async (event) => {
   const claims = await readSessionClaims(event)
   if (!claims) return { data: null }
 
-  const user = await authService.sessionUserById(claims.sub)
+  const user = await authService.resolveSessionUser(claims)
   if (!user) {
     clearSessionCookie(event)
     return { data: null }

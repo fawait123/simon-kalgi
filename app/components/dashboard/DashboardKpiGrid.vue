@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import type { DashboardSummaryDto } from '~~/shared/types/dashboard'
 import { ClipboardList, Stethoscope, TriangleAlert, TrendingDown, TrendingUp, Users } from 'lucide-vue-next'
+import { isRouteAllowed } from '~~/shared/config/access'
 
 const props = defineProps<{
   summary?: DashboardSummaryDto | null
   isPending?: boolean
 }>()
+
+const { user } = useAuthSession()
+const canOpenPatientData = computed(() => isRouteAllowed('/admin/pasien', user.value))
 
 const patients = computed(() => props.summary?.patients ?? { total: 0, thisMonth: 0, lastMonth: 0 })
 const workers = computed(() => props.summary?.workers ?? { active: 0, dentists: 0, nurses: 0 })
@@ -91,9 +95,10 @@ label="Perlu Tindakan Klinis" :value="examinations.clinicalActionNeeded"
               Kalkulus Berat / Karies
             </span>
             <button
-type="button"
+              v-if="canOpenPatientData"
+              type="button"
               class="cursor-pointer rounded text-label-md font-semibold text-primary transition-colors hover:text-primary-hover"
-              @click="navigateTo('/pasien')">
+              @click="navigateTo('/admin/pasien')">
               Tinjau &rarr;
             </button>
           </div>

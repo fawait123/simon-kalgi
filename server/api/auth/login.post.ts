@@ -11,17 +11,11 @@ import {
 import { createApiError, handleApiError } from '~~/server/utils/errors'
 
 function failureError(reason: AuthFailureReason, role: LoginRole) {
-  if (reason === 'unsupported-role')
-    return createApiError(400, 'Portal pasien belum tersedia pada prototipe ini. Masuk memakai akun petugas kesehatan atau administrator.')
-  if (reason === 'invalid-credentials')
-    return createApiError(401, 'Kredensial tidak dikenali. Periksa kembali ID medis / username / email dan kata sandi Anda.')
-  if (reason === 'role-mismatch')
-    return createApiError(
-      403,
-      role === 'admin'
-        ? 'Akun ini bukan administrator klinik. Silakan masuk lewat tab Petugas Kesehatan.'
-        : 'Akun administrator tidak dapat masuk lewat tab Petugas Kesehatan. Gunakan tab Administrator.',
-    )
+  if (reason === 'invalid-credentials') {
+    return createApiError(401, role === 'pasien'
+      ? 'Kredensial pasien tidak dikenali. Periksa Nomor Rekam Medis / NIK / Email dan kata sandi Anda.'
+      : 'Kredensial tidak dikenali. Periksa kembali ID medis / username / email dan kata sandi Anda.')
+  }
   return createApiError(403, 'Akun Anda dinonaktifkan. Hubungi administrator klinik untuk aktivasi kembali.')
 }
 
@@ -33,7 +27,7 @@ export default defineEventHandler(async (event) => {
 
     const maxAge = result.rememberMe ? REMEMBER_MAX_AGE_SECONDS : SESSION_MAX_AGE_SECONDS
     const token = await signSessionToken(
-      { sub: result.user.id, medicalId: result.user.medicalId, fullName: result.user.fullName },
+      { sub: result.user.id, scope: result.scope, medicalId: result.user.medicalId, fullName: result.user.fullName },
       maxAge,
     )
     setSessionCookie(event, token, maxAge)

@@ -93,6 +93,12 @@ enum NotificationCategory {
   sistem
 }
 
+enum CareTaskSession {
+  pagi
+  siang
+  malam
+}
+
 model HealthWorker {
   id               String           @id @default(uuid()) @db.Uuid
   medicalId        String           @unique @map("medical_id") @db.VarChar(15)
@@ -229,13 +235,17 @@ model Patient {
   controlTitle       String?         @map("control_title") @db.VarChar(80)
   controlNote        String?         @map("control_note") @db.VarChar(120)
   controlPriority    ControlPriority @default(normal) @map("control_priority")
+  passwordHash       String?         @map("password_hash")
   createdAt          DateTime        @default(now()) @map("created_at")
   updatedAt          DateTime        @updatedAt @map("updated_at")
 
-  visits        PatientVisit[]
-  examinations  Examination[]
-  monitoring    PatientMonitoring?
-  notifications Notification[]
+  visits             PatientVisit[]
+  examinations       Examination[]
+  monitoring         PatientMonitoring?
+  notifications      Notification[]       @relation("PatientNotificationSubject")
+  inboxNotifications Notification[]       @relation("PatientNotificationInbox")
+  careTasks          CareTask[]
+  careCompletions    CareTaskCompletion[]
 
   @@index([gender])
   @@index([ohisCategory])
@@ -286,22 +296,63 @@ model PatientMonitoring {
 }
 
 model Notification {
-  id          String               @id @default(uuid()) @db.Uuid
-  recipientId String               @map("recipient_id") @db.Uuid
-  category    NotificationCategory @default(pengingat)
-  title       String               @db.VarChar(120)
-  body        String               @db.VarChar(400)
-  patientId   String?              @map("patient_id") @db.Uuid
-  link        String?              @db.VarChar(160)
-  isRead      Boolean              @default(false) @map("is_read")
-  readAt      DateTime?            @map("read_at")
-  createdAt   DateTime             @default(now()) @map("created_at")
-  updatedAt   DateTime             @updatedAt @map("updated_at")
+  id                 String               @id @default(uuid()) @db.Uuid
+  recipientId        String?              @map("recipient_id") @db.Uuid
+  recipientPatientId String?              @map("recipient_patient_id") @db.Uuid
+  category           NotificationCategory @default(pengingat)
+  title              String               @db.VarChar(120)
+  body               String               @db.VarChar(400)
+  patientId          String?              @map("patient_id") @db.Uuid
+  link               String?              @db.VarChar(160)
+  isRead             Boolean              @default(false) @map("is_read")
+  readAt             DateTime?            @map("read_at")
+  createdAt          DateTime             @default(now()) @map("created_at")
+  updatedAt          DateTime             @updatedAt @map("updated_at")
 
-  recipient HealthWorker @relation(fields: [recipientId], references: [id], onDelete: Cascade)
-  patient   Patient?     @relation(fields: [patientId], references: [id], onDelete: SetNull)
+  recipient        HealthWorker? @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+  recipientPatient Patient?      @relation("PatientNotificationInbox", fields: [recipientPatientId], references: [id], onDelete: Cascade)
+  /// Subjek notifikasi, bukan penerimanya: baris kotak masuk pasien memakai recipientPatientId dan membiarkan ini kosong.
+  patient          Patient?      @relation("PatientNotificationSubject", fields: [patientId], references: [id], onDelete: SetNull)
 
   @@index([recipientId, isRead])
   @@index([recipientId, createdAt])
+  @@index([recipientPatientId, isRead])
   @@map("notifications")
+}
+
+model CareTask {
+  id          String          @id @default(uuid()) @db.Uuid
+  patientId   String          @map("patient_id") @db.Uuid
+  session     CareTaskSession
+  title       String          @db.VarChar(160)
+  instruction String          @db.VarChar(500)
+  /// Jam dinding WIB "HH:mm"; `@db.Time` akan terurai sebagai tanggal 1970-01-01 UTC.
+  timeStart   String          @map("time_start") @db.VarChar(5)
+  timeEnd     String          @map("time_end") @db.VarChar(5)
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+
+  patient     Patient              @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  completions CareTaskCompletion[]
+
+  @@index([patientId, session])
+  @@map("care_tasks")
+}
+
+model CareTaskCompletion {
+  id          String   @id @default(uuid()) @db.Uuid
+  taskId      String   @map("task_id") @db.Uuid
+  /// Denormalisasi sadar: `groupBy` tidak bisa memfilter lewat relasi, jadi rentang 28 hari butuh indeks ini.
+  patientId   String   @map("patient_id") @db.Uuid
+  logDate     DateTime @map("log_date") @db.Date
+  completedAt DateTime @map("completed_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  task    CareTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  patient Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, logDate])
+  @@index([patientId, logDate])
+  @@map("care_task_completions")
 }

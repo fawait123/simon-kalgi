@@ -1,15 +1,14 @@
 <script setup lang="ts">
 import type { Component } from 'vue'
 import type { LoginRole } from '~~/shared/schemas/auth.schema'
-import { CircleUser, ShieldCheck, UserRound } from 'lucide-vue-next'
+import { CircleUser, ShieldCheck } from 'lucide-vue-next'
 import { loginRoleConfigs, loginRoleOrder } from '~~/shared/types/auth'
 import { cn } from '~/lib/utils'
 
 const role = defineModel<LoginRole>('role', { required: true })
 
 const roleIcons: Record<LoginRole, Component> = {
-  nakes: UserRound,
-  admin: ShieldCheck,
+  nakes: ShieldCheck,
   pasien: CircleUser,
 }
 </script>
@@ -20,7 +19,7 @@ const roleIcons: Record<LoginRole, Component> = {
       Peran &amp; Tingkat Akses Akun
     </p>
     <div
-      class="grid grid-cols-3 gap-1.5 rounded-xl border border-border-subtle bg-muted/90 p-1"
+      class="grid grid-cols-2 gap-1.5 rounded-xl border border-border-subtle bg-muted/90 p-1"
       role="group"
       aria-labelledby="login-role-label"
     >

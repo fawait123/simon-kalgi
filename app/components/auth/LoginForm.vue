@@ -6,6 +6,7 @@ import { useForm } from 'vee-validate'
 import { toast } from 'vue-sonner'
 import { loginSchema } from '~~/shared/schemas/auth.schema'
 import { loginRoleConfigs } from '~~/shared/types/auth'
+import { resolveHomePath, resolveRedirect } from '~~/shared/config/access'
 import { useLoginMutation } from '~/composables/queries/useAuthQueries'
 
 const props = defineProps<{ role: LoginRole }>()
@@ -32,8 +33,12 @@ const { handleSubmit } = useForm({
 
 const onSubmit = handleSubmit((values) => {
   const body: LoginInput = { ...values, role: props.role }
-  const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/petugas'
-  loginMutation.mutate(body, { onSuccess: () => navigateTo(redirect) })
+  loginMutation.mutate(body, {
+    onSuccess: (response) => {
+      const raw = typeof route.query.redirect === 'string' ? route.query.redirect : ''
+      navigateTo(raw ? resolveRedirect(raw, response.data) : resolveHomePath(response.data.scope))
+    },
+  })
 })
 
 function notifyPasswordReset() {
