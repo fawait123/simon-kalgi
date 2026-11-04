@@ -56,3 +56,8 @@ export const accountKeys = {
   profile: () => [...accountKeys.all, 'profile'] as const,
   stats: () => [...accountKeys.all, 'stats'] as const,
 }
+
+export const dashboardKeys = {
+  all: ['dashboard'] as const,
+  summary: () => [...dashboardKeys.all, 'summary'] as const,
+}

@@ -822,6 +822,162 @@ async function seedExamination() {
   console.log(`Seeded examination for ${patient.fullName} (OHI-S ${ohisScore.toFixed(2)})`)
 }
 
+/**
+ * Data demo halaman /dashboard: pemeriksaan final tersebar 6 bulan ke belakang supaya grafik
+ * tren, donut OHI-S, dan tabel rekam terbaru punya angka nyata.
+ *
+ * Sengaja tidak menghapus apa pun: generator hanya mengisi sampai DEMO_EXAM_TOTAL, jadi
+ * pemeriksaan yang dibuat manual lewat form tetap utuh dan `pnpm db:seed` boleh dijalankan berulang.
+ * Ringkasan OHI-S pada tabel patients tidak disentuh — baris ini murni riwayat.
+ */
+const DEMO_EXAM_TOTAL = 60
+/** Proporsi per bulan (indeks 0 = 5 bulan lalu). Salah satu bulan dibuat jadi puncak kurva. */
+const DEMO_EXAM_MONTH_SHARES = [0.1, 0.14, 0.18, 0.26, 0.17, 0.15]
+const DEMO_EXAM_COMPLAINTS = [
+  'Gusi berdarah saat menyikat gigi sejak dua minggu terakhir',
+  'Nyeri gigi posterior saat mengunyah makanan dingin',
+  'Kontrol rutin dan permintaan pembersihan karang gigi',
+  'Rasa tidak nyaman pada gigi depan bawah karena terasa ada endapan keras',
+  'Ingin pembersihan karang gigi ringan sebelum aktivitas harian',
+]
+const DEMO_EXAM_GINGIVA = [
+  'Gingiva merah muda dengan stiplining hilang ringan',
+  'Edematous dan kemerahan pada marginal gingiva kuadran kiri bawah',
+  'Gingiva pucat dengan resesi servikal ringan pada regio anterior',
+  'Kondisi gingiva baik tanpa perdarahan probing',
+]
+const DEMO_EXAM_MUCOSA = ['Normal, Tidak ada lesi', 'Stomatitis ringan']
+const DEMO_EXAM_FDI_POOL = [16, 26, 36, 46, 11, 31, 41, 14, 24]
+const DEMO_SCALING_PLAN = 'Scaling & Root Planing Rahang Atas & Bawah (Kode: DT-04)'
+
+function seededRandom(seed: number) {
+  let state = seed
+  return () => {
+    state += 0x6d2b79f5
+    let value = state
+    value = Math.imul(value ^ (value >>> 15), value | 1)
+    value ^= value + Math.imul(value ^ (value >>> 7), value | 61)
+    return ((value ^ (value >>> 14)) >>> 0) / 4294967296
+  }
+}
+
+function examDateInPastMonth(monthsAgo: number, day: number) {
+  const anchor = new Date()
+  // Tanggal bulan berjalan di-wrap ke rentang 1..hari ini supaya tetap tersebar, bukan menumpuk di hari ini.
+  const safeDay = monthsAgo === 0 ? 1 + ((day - 1) % anchor.getUTCDate()) : day
+  return new Date(Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth() - monthsAgo, safeDay))
+}
+
+function twoDecimals(value: number) {
+  return Math.round(value * 100) / 100
+}
+
+function pickFrom<T>(list: readonly T[], rng: () => number): T {
+  return list[Math.min(list.length - 1, Math.floor(rng() * list.length))] as T
+}
+
+/** Kombinasi debris/kalkulus yang dijaga tetap berada di dalam band OHI-S-nya. */
+function examIndices(
+  rng: () => number,
+): { debrisIndex: number, calculusIndex: number, heavyCalculus: boolean } {
+  const roll = rng()
+  const category = roll < 0.58 ? 'baik' : roll < 0.84 ? 'sedang' : 'buruk'
+  const heavyCalculus = category !== 'baik' && rng() < 0.42
+
+  if (category === 'baik')
+    return { debrisIndex: twoDecimals(0.2 + rng() * 0.4), calculusIndex: twoDecimals(0.1 + rng() * 0.45), heavyCalculus }
+
+  if (category === 'sedang') {
+    return heavyCalculus
+      ? { debrisIndex: twoDecimals(0.1 + rng() * 0.3), calculusIndex: twoDecimals(2 + rng() * 0.6), heavyCalculus }
+      : { debrisIndex: twoDecimals(0.8 + rng() * 0.7), calculusIndex: twoDecimals(0.6 + rng() * 0.8), heavyCalculus }
+  }
+
+  return heavyCalculus
+    ? { debrisIndex: twoDecimals(1.7 + rng() * 0.9), calculusIndex: twoDecimals(2.4 + rng() * 1), heavyCalculus }
+    : { debrisIndex: twoDecimals(1.7 + rng() * 0.9), calculusIndex: twoDecimals(1.6 + rng() * 0.8), heavyCalculus }
+}
+
+async function seedDashboardExaminations() {
+  const existing = await prisma.examination.count({ where: { status: 'final' } })
+  const needed = Math.max(0, DEMO_EXAM_TOTAL - existing)
+  if (needed === 0) {
+    console.log(`Seeded examinations already at ${existing} final records, nothing to add`)
+    return
+  }
+
+  const patients = await prisma.patient.findMany({
+    where: { medicalRecordNo: { not: examinationSeed.medicalRecordNo } },
+    select: { id: true },
+  })
+  const examiners = await prisma.healthWorker.findMany({
+    where: { status: 'aktif', role: { in: ['spesialis', 'umum', 'perawat'] } },
+    select: { id: true, fullName: true },
+  })
+  if (patients.length === 0 || examiners.length === 0) {
+    console.warn('Skip dashboard examination seed: no patients or active examiners')
+    return
+  }
+
+  const rng = seededRandom(20_250_501)
+  let created = 0
+
+  for (const [monthIndex, share] of DEMO_EXAM_MONTH_SHARES.entries()) {
+    const monthsAgo = DEMO_EXAM_MONTH_SHARES.length - 1 - monthIndex
+    const planned = Math.min(Math.round(needed * share), needed - created)
+
+    for (let row = 0; row < planned; row += 1) {
+      const examiner = pickFrom(examiners, rng)
+      const patientId = pickFrom(patients, rng).id
+      const indices = examIndices(rng)
+      const ohisScore = twoDecimals(indices.debrisIndex + indices.calculusIndex)
+      const withScaling = rng() < 0.45
+      const cariesCount = indices.heavyCalculus || rng() < 0.3 ? 1 + Math.floor(rng() * 4) : 0
+      const cariesFdi = DEMO_EXAM_FDI_POOL.slice(0, cariesCount)
+      const scheduled = rng() < 0.55
+
+      await prisma.examination.create({
+        data: {
+          patientId,
+          examinerId: examiner.id,
+          examinerName: examiner.fullName,
+          examDate: examDateInPastMonth(monthsAgo, 2 + (row % 24)),
+          chiefComplaint: pickFrom(DEMO_EXAM_COMPLAINTS, rng),
+          bloodPressure: `${110 + Math.floor(rng() * 20)}/${70 + Math.floor(rng() * 12)}`,
+          heartRate: 68 + Math.floor(rng() * 20),
+          gingivaCondition: pickFrom(DEMO_EXAM_GINGIVA, rng),
+          mobilityDegree: indices.heavyCalculus ? 1 : 0,
+          mucosaCondition: pickFrom(DEMO_EXAM_MUCOSA, rng),
+          hygieneDiagnosis: `Kategori OHI-S ${ohisCategoryOf(ohisScore)} dengan indeks kalkulus ${indices.calculusIndex.toFixed(2)}`,
+          prescriptionNote: 'Kontrol tiga bulan dengan evaluasi ulang indeks OHI-S',
+          planOfAction: withScaling
+            ? [DEMO_SCALING_PLAN, 'Edukasi Teknik Menyikat Gigi (Bass Technique & Dental Floss)']
+            : ['Edukasi Teknik Menyikat Gigi (Bass Technique & Dental Floss)', 'Aplikasi Fluorid Vernis (Kode: DT-15)'],
+          debrisIndex: indices.debrisIndex,
+          calculusIndex: indices.calculusIndex,
+          ohisScore,
+          ohisCategory: ohisCategoryOf(ohisScore),
+          healthyTeeth: 32 - cariesCount,
+          dmftScore: cariesCount,
+          status: 'final',
+          nextVisitAt: scheduled ? daysFromNow(7 + Math.floor(rng() * 40)) : null,
+          nextVisitNote: scheduled ? 'Kontrol hasil scaling dan evaluasi ulang indeks OHI-S' : null,
+          teeth: {
+            create: cariesFdi.map(fdiNumber => ({
+              fdiNumber,
+              condition: 'karies' as const,
+              note: 'Lesi karies awal pada permukaan oklusal',
+            })),
+          },
+        },
+      })
+      created += 1
+    }
+  }
+
+  console.log(`Seeded ${created} additional final examinations for the dashboard`)
+}
+
 const MONITORING_TARGET = 76
 const MONITORING_PROGRAMS = [
   'Program Pemantauan Periodontitis Kronis Ringan',
@@ -1333,6 +1489,7 @@ async function main() {
   console.log(`Seeded ${staff.length} health workers`)
   await seedPatients()
   await seedExamination()
+  await seedDashboardExaminations()
   await seedMonitoring()
 }
 

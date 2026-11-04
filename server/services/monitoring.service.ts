@@ -433,6 +433,24 @@ export const monitoringService = {
     }
   },
 
+  async confirm(patientId: string) {
+    const existing = await monitoringRepository.findByPatientId(patientId)
+    if (!existing)
+      throw createApiError(404, 'Data pemantauan pasien ini tidak ditemukan.')
+    if (existing.reminderConfirmed)
+      throw createApiError(409, 'Pengingat in-app pasien ini sudah aktif.')
+
+    const updated = await monitoringRepository.confirmReminder(patientId)
+    return {
+      id: updated.id,
+      patientId: updated.patientId,
+      reminderSentAt: isoOf(updated.reminderSentAt),
+      reminderConfirmed: updated.reminderConfirmed,
+      scheduledVisitAt: isoOf(updated.scheduledVisitAt),
+      confirmedAt: updated.updatedAt.toISOString(),
+    }
+  },
+
   async blast(actor: MonitoringActor) {
     const reminderSentAt = new Date()
     const result = await monitoringRepository.blastReminders(reminderSentAt)

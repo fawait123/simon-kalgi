@@ -189,6 +189,23 @@ export const monitoringRepository = {
     })
   },
 
+  /** Mengaktifkan pengingat in-app H-1 untuk jadwal kontrol pasien (`reminder_confirmed`). */
+  confirmReminder(patientId: string) {
+    return prisma.patientMonitoring.update({
+      where: { patientId },
+      data: { reminderConfirmed: true },
+      select: {
+        id: true,
+        patientId: true,
+        reminderSentAt: true,
+        reminderConfirmed: true,
+        scheduledVisitAt: true,
+        updatedAt: true,
+        patient: { select: { fullName: true } },
+      },
+    })
+  },
+
   blastReminders(reminderSentAt: Date) {
     return prisma.patientMonitoring.updateMany({
       where: { status: { in: ['terlambat', 'kritis'] } },
