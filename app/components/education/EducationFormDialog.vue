@@ -103,7 +103,7 @@ const onSubmit = handleSubmit((values) => {
             {{ isEdit ? 'Edit Materi Edukasi' : 'Tambah Materi Edukasi' }}
           </DialogTitle>
           <DialogDescription class="font-body-sm text-body-sm text-text-secondary">
-            Konten ditulis dalam Markdown dan hanya tampil di portal pasien bila status Terbit aktif.
+            Konten ditulis dengan editor visual dan hanya tampil di portal pasien bila status Terbit aktif.
           </DialogDescription>
         </div>
       </div>
@@ -209,11 +209,11 @@ v-bind="componentField" rows="2" class="rounded-lg"
 
         <FormField v-slot="{ componentField }" name="body">
           <FormItem class="flex flex-col gap-1.5">
-            <FormLabel class="font-label-md text-label-md">Isi Materi (Markdown)</FormLabel>
+            <FormLabel class="font-label-md text-label-md">Isi Materi</FormLabel>
             <FormControl>
-              <Textarea
-v-bind="componentField" rows="12" class="rounded-lg font-mono text-sm"
-                placeholder="### Sub judul&#10;&#10;Tulis konten edukasi di sini. **Tebal**, daftar, dan tabel Markdown didukung." />
+              <EducationBodyEditor
+v-bind="componentField"
+                placeholder="Tulis konten edukasi di sini. Gunakan toolbar untuk sub judul, daftar, tabel, dan tautan." />
             </FormControl>
             <FormMessage class="font-caption text-caption" />
           </FormItem>

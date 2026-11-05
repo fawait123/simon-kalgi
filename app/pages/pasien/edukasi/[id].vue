@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Bookmark, BookmarkCheck, ChevronRight, ChevronLeft, Clock, GraduationCap, SearchX } from 'lucide-vue-next'
-import { renderMarkdown } from '~/lib/markdown'
+import { sanitizeHtml } from '~/lib/html'
 import { usePatientEducationDetailQuery } from '~/composables/queries/usePatientEducationQueries'
 import {
   educationCategoryBadgeClass,
@@ -16,7 +16,7 @@ const articleId = computed(() => String(route.params.id ?? ''))
 const detailQuery = usePatientEducationDetailQuery(() => articleId.value || null)
 const article = computed(() => detailQuery.data.value?.data ?? null)
 
-const bodyHtml = computed(() => (article.value?.body ? renderMarkdown(article.value.body) : ''))
+const bodyHtml = computed(() => (article.value?.body ? sanitizeHtml(article.value.body) : ''))
 
 const bookmarks = useEducationBookmarks()
 const isBookmarked = computed(() => Boolean(article.value && bookmarks.isBookmarked(article.value.id)))
@@ -112,7 +112,7 @@ const isBookmarked = computed(() => Boolean(article.value && bookmarks.isBookmar
         <GraduationCap class="size-10" aria-hidden="true" />
       </div>
 
-      <!-- bodyHtml sudah disanitasi DOMPurify di app/lib/markdown.ts -->
+      <!-- bodyHtml sudah disanitasi DOMPurify di app/lib/html.ts -->
       <!-- eslint-disable vue/no-v-html -->
       <div
         class="font-body-md text-body-md leading-relaxed text-text-secondary [&_a]:font-label-md [&_a]:text-primary [&_a]:underline [&_blockquote]:border-l-2 [&_blockquote]:border-border-subtle [&_blockquote]:pl-3 [&_blockquote]:text-text-muted [&_h1]:mt-4 [&_h1]:font-headline-md [&_h1]:text-headline-md [&_h1]:text-text-primary [&_h2]:mt-4 [&_h2]:font-headline-md [&_h2]:text-headline-md [&_h2]:text-text-primary [&_h3]:mt-4 [&_h3]:font-headline-sm [&_h3]:text-headline-sm [&_h3]:font-semibold [&_h3]:text-text-primary [&_li]:ml-1 [&_ol]:list-decimal [&_ol]:space-y-1 [&_ol]:pl-5 [&_p]:my-2.5 [&_strong]:text-text-primary [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-border-subtle [&_td]:px-2 [&_td]:py-1.5 [&_td]:text-body-sm [&_th]:border [&_th]:border-border-subtle [&_th]:bg-bg-canvas [&_th]:px-2 [&_th]:py-1.5 [&_th]:text-left [&_th]:font-label-sm [&_th]:text-label-sm [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-5"

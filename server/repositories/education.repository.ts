@@ -1,7 +1,7 @@
 import type { Prisma } from '@prisma/client'
 import { prisma } from '~~/server/utils/prisma'
 
-/** Daftar/kelola tidak butuh `body` (Markdown penuh) — hanya detail reader yang memuatnya. */
+/** Daftar/kelola tidak butuh `body` (HTML penuh) — hanya detail reader yang memuatnya. */
 export const educationSelect = {
   id: true,
   title: true,
