@@ -1,75 +1,59 @@
-# Nuxt Minimal Starter
+# DentaCare Pro
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+Aplikasi manajemen klinik gigi berbasis Nuxt 3 — portal admin (kelola petugas, pasien, pemeriksaan, rekam medis, materi edukasi, monitoring) dan portal pasien (dashboard, checklist perawatan mandiri, rekam medis, edukasi kesehatan gigi).
+
+## Tech Stack
+
+| Layer | Teknologi |
+|---|---|
+| Framework | Nuxt 3 (Vue 3, `<script setup lang="ts">`) |
+| Server API | Nitro (`server/api`) |
+| Database | PostgreSQL + Prisma |
+| UI | shadcn-vue + Tailwind CSS |
+| Data fetching | TanStack Query |
+| Validasi | Zod |
+| Editor konten | TipTap (WYSIWYG, body materi edukasi disimpan sebagai HTML) |
+| Package manager | pnpm |
+
+Struktur folder, alur layer (Page → Composable → API → Service → Repository), dan konvensi penamaan mengikuti [AGENTS.md](./AGENTS.md).
 
 ## Setup
 
-Make sure to install dependencies:
-
 ```bash
-# npm
-npm install
-
-# pnpm
 pnpm install
-
-# yarn
-yarn install
-
-# bun
-bun install
+cp .env.example .env   # sesuaikan DATABASE_URL
+pnpm prisma migrate dev
+pnpm prisma generate
+pnpm prisma db seed
 ```
+
+Akun demo (admin, nakes, pasien) dapat dilihat di `prisma/seed.ts`.
 
 ## Development Server
 
-Start the development server on `http://localhost:3000`:
+```bash
+pnpm dev
+```
+
+Buka `http://localhost:3000` — login terpisah untuk portal admin (`/admin`) dan portal pasien (`/pasien`).
+
+## Quality Checks
 
 ```bash
-# npm
-npm run dev
-
-# pnpm
-pnpm dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
+pnpm lint
+pnpm typecheck
 ```
 
 ## Production
 
-Build the application for production:
-
 ```bash
-# npm
-npm run build
-
-# pnpm
 pnpm build
-
-# yarn
-yarn build
-
-# bun
-bun run build
-```
-
-Locally preview production build:
-
-```bash
-# npm
-npm run preview
-
-# pnpm
 pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
 ```
 
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+Untuk deployment: jalankan `pnpm prisma migrate deploy` sebelum memulai server produksi.
+
+## Fitur Utama
+
+- **Portal Admin** — data petugas kesehatan (CRUD), data pasien, pemeriksaan gigi & rekam medis (OHI-S, indeks kalkulus), pemantauan pasien, notifikasi, dan kelola materi edukasi (`/admin/edukasi`, khusus role admin).
+- **Portal Pasien** — dashboard ringkasan (skor OHI-S, jadwal kontrol, kepatuhan), checklist perawatan mandiri harian, riwayat pemeriksaan, serta edukasi kesehatan gigi dengan pencarian/filter, bookmark lokal, dan halaman detail artikel.
