@@ -2,6 +2,7 @@
 import {
   BadgeCheck,
   Bell,
+  BookOpen,
   FolderHeart,
   HeartPulse,
   LayoutGrid,
@@ -21,6 +22,7 @@ const mainNav = [
   { to: '/admin/pemeriksaan', label: 'Pemeriksaan Gigi & Mulut', icon: Smile },
   { to: '/admin/rekam-pemeriksaan', label: 'Seluruh Rekam Pasien', icon: FolderHeart },
   { to: '/admin/monitoring', label: 'Monitoring Pasien', icon: HeartPulse },
+  { to: '/admin/edukasi', label: 'Materi Edukasi', icon: BookOpen },
 ]
 
 const systemNav = [

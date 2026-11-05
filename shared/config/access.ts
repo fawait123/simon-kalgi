@@ -25,6 +25,7 @@ export const routeAccessRules: readonly RouteAccessRule[] = [
   { path: '/pasien', match: 'prefix', scopes: ['patient'] },
   { path: '/admin/pasien', match: 'prefix', scopes: STAFF_SCOPES, accessLevels: ADMIN_ACCESS },
   { path: '/admin/petugas', match: 'prefix', scopes: STAFF_SCOPES, accessLevels: ADMIN_ACCESS },
+  { path: '/admin/edukasi', match: 'prefix', scopes: STAFF_SCOPES, accessLevels: ADMIN_ACCESS },
 ]
 
 function normalizePath(input: string) {

@@ -99,6 +99,20 @@ enum CareTaskSession {
   malam
 }
 
+enum EducationCategory {
+  menyikat
+  kalkulus
+  gusi
+  diet
+  faq
+}
+
+enum EducationFormat {
+  artikel
+  video
+  checklist
+}
+
 model HealthWorker {
   id               String           @id @default(uuid()) @db.Uuid
   medicalId        String           @unique @map("medical_id") @db.VarChar(15)
@@ -367,4 +381,24 @@ model CareTaskCompletion {
   @@unique([taskId, logDate])
   @@index([patientId, logDate])
   @@map("care_task_completions")
+}
+
+model EducationArticle {
+  id            String            @id @default(uuid()) @db.Uuid
+  title         String            @unique @db.VarChar(200)
+  excerpt       String            @db.VarChar(320)
+  body          String            @db.Text
+  category      EducationCategory
+  format        EducationFormat   @default(artikel)
+  coverImageUrl String?           @map("cover_image_url") @db.VarChar(500)
+  readMinutes   Int               @default(4) @map("read_minutes")
+  isPublished   Boolean           @default(false) @map("is_published")
+  isFeatured    Boolean           @default(false) @map("is_featured")
+  viewCount     Int               @default(0) @map("view_count")
+  createdAt     DateTime          @default(now()) @map("created_at")
+  updatedAt     DateTime          @updatedAt @map("updated_at")
+
+  @@index([category])
+  @@index([isPublished])
+  @@map("education_articles")
 }

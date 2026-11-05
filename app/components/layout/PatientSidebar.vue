@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Bell, LayoutGrid, ListChecks, LogOut, Smile, Stethoscope, UserRound } from 'lucide-vue-next'
+import { Bell, GraduationCap, LayoutGrid, ListChecks, LogOut, Smile, Stethoscope, UserRound } from 'lucide-vue-next'
 import { isRouteAllowed } from '~~/shared/config/access'
 import { useLogoutMutation } from '~/composables/queries/useAuthQueries'
 import { usePatientNotificationStatsQuery } from '~/composables/queries/usePatientNotificationQueries'
@@ -9,6 +9,7 @@ const mainNav = [
   { to: '/pasien/profil', label: 'Profil Saya', icon: UserRound },
   { to: '/pasien/kepatuhan', label: 'Checklist Kepatuhan', icon: ListChecks },
   { to: '/pasien/pemeriksaan', label: 'Pemeriksaan Gigi', icon: Stethoscope },
+  { to: '/pasien/edukasi', label: 'Edukasi Kesehatan Gigi', icon: GraduationCap },
 ]
 
 const systemNav = [

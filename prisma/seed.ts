@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client'
 import { hashSync } from 'bcryptjs'
 import { seedCareChecklist } from './seed-care'
+import { seedEducationArticles } from './seed-education'
 import { seedPatientInbox } from './seed-patient-inbox'
 import { seedPatientRecord } from './seed-patient-record'
 
@@ -1524,6 +1525,7 @@ async function main() {
   await seedCareChecklist(prisma)
   await seedPatientInbox(prisma)
   await seedPatientRecord(prisma)
+  await seedEducationArticles(prisma)
 }
 
 main()

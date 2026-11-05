@@ -41,13 +41,8 @@ const canSaveActiveTab = computed(() => activeTab.value === 'personal' || active
           untuk kelancaran administrasi dan tindakan klinis di DentaCare Pro.
         </p>
       </div>
-      <Button
-        v-if="profile"
-        type="button"
-        class="gap-1.5 rounded-lg font-label-md text-label-md"
-        :disabled="!canSaveActiveTab"
-        @click="saveActiveTab"
-      >
+      <Button v-if="profile" type="button" class="gap-1.5 rounded-lg font-label-md text-label-md"
+        :disabled="!canSaveActiveTab" @click="saveActiveTab">
         <CheckCircle2 class="size-4" aria-hidden="true" />
         Simpan Perubahan
       </Button>
@@ -61,10 +56,8 @@ const canSaveActiveTab = computed(() => activeTab.value === 'personal' || active
       </div>
     </div>
 
-    <div
-      v-else-if="profileQuery.error.value || !profile"
-      class="flex flex-col items-center gap-space-md rounded-xl border border-border-subtle bg-surface-card p-space-2xl text-center shadow-sm"
-    >
+    <div v-else-if="profileQuery.error.value || !profile"
+      class="flex flex-col items-center gap-space-md rounded-xl border border-border-subtle bg-surface-card p-space-2xl text-center shadow-sm">
       <span class="font-headline-md text-headline-md text-text-primary">Profil gagal dimuat</span>
       <p class="max-w-md font-body-md text-body-md text-text-secondary">
         {{ (profileQuery.error.value as { data?: { message?: string } } | null)?.data?.message
@@ -82,36 +75,14 @@ const canSaveActiveTab = computed(() => activeTab.value === 'personal' || active
 
           <PatientProfileIdentityCard :profile="profile" />
 
-          <PatientProfilePersonalForm
-            v-show="activeTab === 'personal'"
-            id="patient-profile-panel-personal"
-            ref="personalForm"
-            role="tabpanel"
-            aria-labelledby="patient-profile-tab-personal"
-            :profile="profile"
-          />
-          <PatientProfileMedicalPanel
-            v-show="activeTab === 'medical'"
-            id="patient-profile-panel-medical"
-            role="tabpanel"
-            aria-labelledby="patient-profile-tab-medical"
-            :profile="profile"
-          />
-          <PatientProfileContactInsuranceForm
-            v-show="activeTab === 'contact'"
-            id="patient-profile-panel-contact"
-            ref="contactForm"
-            role="tabpanel"
-            aria-labelledby="patient-profile-tab-contact"
-            :profile="profile"
-          />
-          <PatientProfileSecurityForm
-            v-show="activeTab === 'security'"
-            id="patient-profile-panel-security"
-            role="tabpanel"
-            aria-labelledby="patient-profile-tab-security"
-            :profile="profile"
-          />
+          <PatientProfilePersonalForm v-show="activeTab === 'personal'" id="patient-profile-panel-personal"
+            ref="personalForm" role="tabpanel" aria-labelledby="patient-profile-tab-personal" :profile="profile" />
+          <PatientProfileMedicalPanel v-show="activeTab === 'medical'" id="patient-profile-panel-medical"
+            role="tabpanel" aria-labelledby="patient-profile-tab-medical" :profile="profile" />
+          <!-- <PatientProfileContactInsuranceForm v-show="activeTab === 'contact'" id="patient-profile-panel-contact"
+            ref="contactForm" role="tabpanel" aria-labelledby="patient-profile-tab-contact" :profile="profile" /> -->
+          <PatientProfileSecurityForm v-show="activeTab === 'security'" id="patient-profile-panel-security"
+            role="tabpanel" aria-labelledby="patient-profile-tab-security" :profile="profile" />
         </div>
 
         <aside class="hidden w-full flex-col gap-space-md lg:flex lg:sticky lg:top-20">

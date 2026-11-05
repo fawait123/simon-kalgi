@@ -1,4 +1,5 @@
 import type { ExaminationListQueryInput } from '~~/shared/schemas/examination.schema'
+import type { EducationListQuery, PatientEducationQuery } from '~~/shared/schemas/education.schema'
 import type { HealthWorkerListQuery } from '~~/shared/schemas/health-worker.schema'
 import type { MonitoringListQuery, MonitoringTrendRange } from '~~/shared/schemas/monitoring.schema'
 import type { NotificationListQuery } from '~~/shared/schemas/notification.schema'
@@ -88,4 +89,23 @@ export const patientNotificationKeys = {
   lists: () => [...patientNotificationKeys.all, 'list'] as const,
   list: (params: NotificationListQuery) => [...patientNotificationKeys.lists(), params] as const,
   stats: () => [...patientNotificationKeys.all, 'stats'] as const,
+}
+
+export const educationKeys = {
+  all: ['educations'] as const,
+  lists: () => [...educationKeys.all, 'list'] as const,
+  list: (params: EducationListQuery) => [...educationKeys.lists(), params] as const,
+  details: () => [...educationKeys.all, 'detail'] as const,
+  detail: (id: string) => [...educationKeys.details(), id] as const,
+  stats: () => [...educationKeys.all, 'stats'] as const,
+}
+
+// Root-nya sengaja tidak dinest di bawah educationKeys: invalidasi CRUD admin tidak boleh
+// menarik ulang feed edukasi yang dibaca pasien.
+export const patientEducationKeys = {
+  all: ['patient-educations'] as const,
+  lists: () => [...patientEducationKeys.all, 'list'] as const,
+  list: (params: PatientEducationQuery) => [...patientEducationKeys.lists(), params] as const,
+  details: () => [...patientEducationKeys.all, 'detail'] as const,
+  detail: (id: string) => [...patientEducationKeys.details(), id] as const,
 }
