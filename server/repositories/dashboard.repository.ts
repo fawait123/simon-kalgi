@@ -12,6 +12,27 @@ export const dashboardRepository = {
     return prisma.patient.count({ where: { createdAt: { gte, lt } } })
   },
 
+  countAdultPatients(cutoff: Date) {
+    return prisma.patient.count({ where: { birthDate: { lte: cutoff } } })
+  },
+
+  countPatientsWithCalculus() {
+    return prisma.patient.count({ where: { calculusIndex: { gt: 0 } } })
+  },
+
+  async countPatientsWithScaling() {
+    const rows = await prisma.scalingRecord.findMany({
+      where: { examination: { status: 'final' } },
+      select: { patientId: true },
+      distinct: ['patientId'],
+    })
+    return rows.length
+  },
+
+  countPatientsNeedingControl(until: Date) {
+    return prisma.patient.count({ where: { nextVisitAt: { not: null, lte: until } } })
+  },
+
   groupWorkerRoleAndStatus() {
     return prisma.healthWorker.groupBy({
       by: ['role', 'status'],
@@ -27,15 +48,12 @@ export const dashboardRepository = {
     return prisma.examination.count({ where: { status: 'final', examDate: { gte, lt } } })
   },
 
-  /** Kasus yang butuh tindakan: kalkulus berat atau ada gigi berkaries pada rekaman final. */
+  /** Kasus yang butuh tindakan: kalkulus berat pada rekaman final. */
   countClinicalActionCases() {
     return prisma.examination.count({
       where: {
         status: 'final',
-        OR: [
-          { calculusIndex: { gte: heavyCalculusIndex } },
-          { teeth: { some: { condition: 'karies' } } },
-        ],
+        calculusIndex: { gte: heavyCalculusIndex },
       },
     })
   },

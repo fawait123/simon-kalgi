@@ -121,10 +121,6 @@ async function choose(examinationId: string) {
                   {{ formatScore(exam.ohisScore) }} · {{ ohisCategoryLabel[exam.ohisCategory] }}
                 </dd>
               </div>
-              <div class="flex items-center gap-1.5">
-                <dt>Gigi Sehat</dt>
-                <dd class="font-medium text-text-primary">{{ exam.healthyTeeth }} / 32</dd>
-              </div>
             </dl>
 
             <Button type="button" variant="outline" size="sm"

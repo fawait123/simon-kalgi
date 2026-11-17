@@ -4,6 +4,7 @@ import {
   deriveRecordStatus,
   examinationRecordStatusBadgeClass,
   examinationRecordStatusLabel,
+  scalingTypeLabel,
 } from '~~/shared/types/examination'
 import { CalendarClock, MapPin } from 'lucide-vue-next'
 import { formatDateId } from '~/lib/format'
@@ -49,6 +50,22 @@ const recordStatus = computed(() => deriveRecordStatus(props.detail))
       <p class="font-caption text-caption text-text-secondary">
         Penanggung jawab: {{ detail.examinerName }}
       </p>
+    </div>
+
+    <div v-if="detail.scalingRecord" class="flex flex-col gap-1 rounded-lg border border-status-success/30 bg-status-success-bg px-space-md py-3">
+      <span class="font-label-md text-label-md font-semibold text-status-success">
+        Scaling telah dilakukan
+      </span>
+      <span class="font-body-sm text-body-sm text-text-primary">
+        {{ scalingTypeLabel[detail.scalingRecord.scalingType] }} · {{ detail.scalingRecord.quadrants }}
+      </span>
+      <span class="font-caption text-caption text-text-secondary">
+        Operator {{ detail.scalingRecord.operatorName }} ·
+        {{ formatDateId(detail.scalingRecord.performedAt) }}
+      </span>
+      <span v-if="detail.scalingRecord.note" class="font-body-sm text-body-sm text-text-secondary">
+        {{ detail.scalingRecord.note }}
+      </span>
     </div>
 
     <div class="flex flex-col gap-2">

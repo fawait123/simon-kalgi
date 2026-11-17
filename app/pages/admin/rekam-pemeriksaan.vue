@@ -3,7 +3,7 @@ import type {
   ExaminationOhisFilter,
   ExaminationRecordStatusFilter,
 } from '~~/shared/schemas/examination.schema'
-import type { ExaminationListItem, ExaminationRecordTab } from '~~/shared/types/examination'
+import type { ExaminationListItem } from '~~/shared/types/examination'
 import { ohisCategoryLabel } from '~~/shared/types/patient'
 import { refDebounced } from '@vueuse/core'
 import { ChevronRight, Plus } from 'lucide-vue-next'
@@ -70,7 +70,6 @@ const examiners = computed(() =>
 
 const detailOpen = ref(false)
 const detailRow = ref<ExaminationListItem | null>(null)
-const detailTab = ref<ExaminationRecordTab>('odontogram')
 
 const deleteOpen = ref(false)
 const deleteRow = ref<ExaminationListItem | null>(null)
@@ -87,9 +86,8 @@ watch(meta, (current) => {
     page.value = lastPage
 })
 
-function openDetail(row: ExaminationListItem, tab: ExaminationRecordTab) {
+function openDetail(row: ExaminationListItem) {
   detailRow.value = row
-  detailTab.value = tab
   detailOpen.value = true
 }
 
@@ -148,7 +146,7 @@ function resetFilters() {
           </span>
         </div>
         <p class="max-w-3xl font-body-md text-body-md text-text-secondary">
-          Telusuri seluruh hasil evaluasi OHI-S, odontogram, dan rekomendasi perawatan pasien.
+          Telusuri seluruh hasil evaluasi OHI-S dan rekomendasi perawatan pasien.
           Filter sesuai kategori higiene, status tindakan, periode bulan, atau dokter pemeriksa.
         </p>
       </div>
@@ -184,8 +182,7 @@ function resetFilters() {
         :is-pending="listQuery.isPending.value"
         :is-error="listQuery.isError.value"
         :error-text="errorText"
-        @odontogram="openDetail($event, 'odontogram')"
-        @view-ohis="openDetail($event, 'ohis')"
+        @view-ohis="openDetail"
         @print="printRow"
         @remove="deleteRow = $event; deleteOpen = true"
         @retry="() => listQuery.refetch()"
@@ -215,7 +212,6 @@ function resetFilters() {
 
     <ExaminationRecordDetailDialog
       v-model:open="detailOpen"
-      v-model:tab="detailTab"
       :row="detailRow"
       @print="printExaminationResume($event)"
     />

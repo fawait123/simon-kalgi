@@ -52,11 +52,17 @@ export const dashboardService = {
     const windowStart = startOfUtcMonth(now, -(TREND_MONTHS - 1))
     const todayMs = utcDayMs(now)
     const activityStartMs = todayMs - (ACTIVITY_WINDOW_DAYS - 1) * MS_PER_DAY
+    const adultCutoff = new Date(Date.UTC(now.getUTCFullYear() - 18, now.getUTCMonth(), now.getUTCDate()))
+    const controlUntil = new Date(todayMs + 8 * MS_PER_DAY - 1)
 
     const [
       patientTotal,
       patientsThisMonth,
       patientsLastMonth,
+      adultPatients,
+      patientsWithCalculus,
+      patientsScaling,
+      patientsNeedControl,
       workerGroups,
       examinationTotal,
       examinationsLast7Days,
@@ -67,6 +73,10 @@ export const dashboardService = {
       dashboardRepository.countPatients(),
       dashboardRepository.countPatientsCreatedBetween(monthStart, startOfUtcMonth(now, 1)),
       dashboardRepository.countPatientsCreatedBetween(prevMonthStart, monthStart),
+      dashboardRepository.countAdultPatients(adultCutoff),
+      dashboardRepository.countPatientsWithCalculus(),
+      dashboardRepository.countPatientsWithScaling(),
+      dashboardRepository.countPatientsNeedingControl(controlUntil),
       dashboardRepository.groupWorkerRoleAndStatus(),
       dashboardRepository.countFinalExaminations(),
       dashboardRepository.countFinalExaminationsBetween(
@@ -93,7 +103,15 @@ export const dashboardService = {
       activePeriodYear: now.getUTCFullYear(),
       monthLabel: `${monthName(now)} ${now.getUTCFullYear()}`,
       trendWindowLabel: `${monthName(windowStart)} ${windowStart.getUTCFullYear()} – ${monthName(now)} ${now.getUTCFullYear()}`,
-      patients: { total: patientTotal, thisMonth: patientsThisMonth, lastMonth: patientsLastMonth },
+      patients: {
+        total: patientTotal,
+        thisMonth: patientsThisMonth,
+        lastMonth: patientsLastMonth,
+        adult: adultPatients,
+        withCalculus: patientsWithCalculus,
+        scalingDone: patientsScaling,
+        needControl: patientsNeedControl,
+      },
       workers: {
         active: countByRole(workerGroups, ['aktif'], ['spesialis', 'umum', 'perawat', 'asisten']),
         dentists: countByRole(workerGroups, ['aktif'], dentistRoles),

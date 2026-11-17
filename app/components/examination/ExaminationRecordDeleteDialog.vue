@@ -29,8 +29,8 @@ function confirmDelete() {
           Rekam medis
           <span class="font-body-lg text-text-primary">{{ props.row?.patient.fullName }}</span>
           ({{ props.row?.patient.medicalRecordNo }}) tanggal
-          {{ props.row ? formatDateId(props.row.examDate) : '-' }} akan dihapus permanen beserta odontogram
-          dan skor OHI-S-nya. Ringkasan pada data pasien akan dikembalikan ke pemeriksaan final terbaru yang tersisa.
+          {{ props.row ? formatDateId(props.row.examDate) : '-' }} akan dihapus permanen beserta skor
+          OHI-S-nya. Ringkasan pada data pasien akan dikembalikan ke pemeriksaan final terbaru yang tersisa.
         </AlertDialogDescription>
       </AlertDialogHeader>
       <AlertDialogFooter>

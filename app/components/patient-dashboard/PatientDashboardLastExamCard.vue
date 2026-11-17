@@ -1,20 +1,14 @@
 <script setup lang="ts">
 import type { ExaminationDetailDto } from '~~/shared/types/examination'
-import { toothConditionLabel, toothNameOf } from '~~/shared/types/examination'
+import { formatScore, ohisBands, surfaceLabel } from '~~/shared/types/examination'
+import { ohisBadgeClass, ohisCategoryLabel } from '~~/shared/types/patient'
 import { formatShortDateId } from '~/lib/format'
 import { ArrowRight, ClipboardList, Stethoscope } from 'lucide-vue-next'
 
 const props = defineProps<{ detail: ExaminationDetailDto }>()
 
-const conditionChipClass: Record<string, string> = {
-  karies: 'bg-status-danger-bg text-status-danger',
-  tambalan: 'bg-status-info-bg text-status-info',
-  mahkota: 'bg-status-warning-bg text-status-warning',
-  hilang: 'bg-surface-container text-text-muted',
-}
-
-const allFindings = computed(() => props.detail.teeth.filter(tooth => tooth.condition !== 'sehat'))
-const findings = computed(() => allFindings.value.slice(0, 4))
+const band = computed(() => ohisBands.find(item => item.category === props.detail.ohisCategory))
+const tone = computed(() => band.value?.textClass ?? 'text-text-primary')
 </script>
 
 <template>
@@ -22,10 +16,10 @@ const findings = computed(() => allFindings.value.slice(0, 4))
     <div class="mb-space-md flex items-center justify-between gap-space-sm">
       <div>
         <span class="font-label-sm text-label-sm font-semibold uppercase tracking-wider text-primary">
-          Rekam Visual
+          Hasil Pemeriksaan
         </span>
         <h2 class="font-headline-md text-headline-md text-text-primary">
-          Pemeriksaan Gigi Terakhir &amp; Odontogram
+          Pemeriksaan Gigi Terakhir &amp; Skor OHI-S
         </h2>
       </div>
       <span class="rounded bg-surface-container px-2.5 py-1 font-label-sm text-label-sm text-text-secondary">
@@ -43,7 +37,7 @@ const findings = computed(() => allFindings.value.slice(0, 4))
         </span>
         <span class="font-caption text-caption text-text-secondary">
           {{ detail.status === 'final' ? 'Rekam medis final' : 'Draf — menunggu finalisasi dokter' }}
-          • {{ detail.healthyTeeth }} dari 32 gigi terpantau sehat
+          • Indeks kebersihan mulut diperbarui pada kunjungan ini
         </span>
       </div>
     </div>
@@ -51,51 +45,56 @@ const findings = computed(() => allFindings.value.slice(0, 4))
     <div class="mb-space-lg rounded-xl bg-surface-card p-space-lg shadow-sm ring-1 ring-border-subtle">
       <div class="mb-space-md flex items-center justify-between">
         <span class="font-label-sm text-label-sm uppercase tracking-wide text-text-muted">
-          Fokus Temuan Odontogram Aktif
+          Indeks Kebersihan Mulut (OHI-S)
         </span>
-        <span class="flex items-center gap-1 font-caption text-caption font-medium text-status-success">
-          <span class="size-1.5 rounded-full bg-status-success" aria-hidden="true" />
-          {{ allFindings.length }} Regio Dipantau
+        <span class="rounded border px-2 py-0.5 font-caption text-caption font-semibold"
+          :class="ohisBadgeClass[detail.ohisCategory]">
+          {{ ohisCategoryLabel[detail.ohisCategory] }}
         </span>
       </div>
 
-      <p
-        v-if="findings.length === 0"
-        class="rounded-lg bg-bg-canvas p-space-md font-body-md text-body-md text-text-secondary"
-      >
-        Tidak ada temuan gigi bermasalah pada kunjungan terakhir. Seluruh regio tercatat sehat —
-        pertahankan rutinitas menyikat gigi dan benang gigi Anda.
-      </p>
-
-      <div v-else class="grid grid-cols-1 gap-space-md md:grid-cols-2">
-        <div
-          v-for="tooth in findings"
-          :key="tooth.id"
-          class="flex items-start gap-space-sm rounded-lg bg-bg-canvas p-space-md"
-        >
-          <span
-            class="flex size-10 shrink-0 items-center justify-center rounded-lg font-headline-sm text-headline-sm"
-            :class="conditionChipClass[tooth.condition] ?? 'bg-primary-surface text-primary'"
-          >
-            {{ tooth.fdiNumber }}
+      <div class="grid grid-cols-1 gap-space-md sm:grid-cols-3">
+        <div class="flex flex-col gap-1 rounded-lg bg-bg-canvas p-space-md">
+          <span class="font-caption text-caption text-text-muted">Debris Index (DI-S)</span>
+          <span class="font-metric-display text-metric-display font-bold text-text-primary">
+            {{ formatScore(detail.debrisIndex) }}
           </span>
-          <div class="flex min-w-0 flex-col">
-            <div class="flex flex-wrap items-center gap-2">
-              <span class="font-label-md text-label-md font-semibold text-text-primary">
-                {{ toothNameOf(tooth.fdiNumber) }}
-              </span>
-              <span
-                class="rounded px-1.5 py-0.5 font-label-sm text-label-sm"
-                :class="conditionChipClass[tooth.condition] ?? 'bg-surface-container text-text-secondary'"
-              >
-                {{ toothConditionLabel[tooth.condition] }}
-              </span>
-            </div>
-            <p class="mt-1 font-caption text-caption leading-relaxed text-text-secondary">
-              {{ tooth.note || 'Tidak ada catatan tambahan dari pemeriksa untuk regio ini.' }}
-            </p>
+        </div>
+        <div class="flex flex-col gap-1 rounded-lg bg-bg-canvas p-space-md">
+          <span class="font-caption text-caption text-text-muted">Calculus Index (CI-S)</span>
+          <span class="font-metric-display text-metric-display font-bold text-text-primary">
+            {{ formatScore(detail.calculusIndex) }}
+          </span>
+        </div>
+        <div class="flex flex-col gap-1 rounded-lg border border-primary/20 bg-primary-surface/60 p-space-md">
+          <span class="font-caption text-caption text-text-muted">Skor OHI-S (DI-S + CI-S)</span>
+          <span class="font-metric-display text-metric-display font-bold" :class="tone">
+            {{ formatScore(detail.ohisScore) }}
+          </span>
+        </div>
+      </div>
+
+      <div class="mt-space-md flex flex-col gap-2 border-t border-border-subtle pt-space-md">
+        <span class="font-label-sm text-label-sm font-semibold text-text-secondary">
+          Penilaian 6 Gigi Indeks
+        </span>
+        <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          <div v-for="score in detail.indexScores" :key="score.id"
+            class="flex flex-col gap-0.5 rounded-lg bg-bg-canvas px-2.5 py-2">
+            <span class="font-label-sm text-label-sm font-semibold text-text-primary">
+              Gigi {{ score.fdiNumber }}
+            </span>
+            <span class="font-caption text-caption text-text-muted">
+              {{ surfaceLabel[score.surface] }}
+            </span>
+            <span class="font-caption text-caption text-text-secondary">
+              Debris {{ score.debrisValue }} · Kalkulus {{ score.calculusValue }}
+            </span>
           </div>
         </div>
+        <p v-if="detail.indexScores.length === 0" class="font-caption text-caption text-text-muted">
+          Belum ada skor indeks tersimpan pada rekaman ini.
+        </p>
       </div>
     </div>
 
@@ -103,7 +102,7 @@ const findings = computed(() => allFindings.value.slice(0, 4))
       <NuxtLink to="/pasien/pemeriksaan" class="flex w-full items-center justify-between">
         <span class="flex items-center gap-2">
           <ClipboardList class="size-[18px]" aria-hidden="true" />
-          Buka Bagan Lengkap 32 Gigi Odontogram &amp; Catatan Tindakan
+          Buka Riwayat Pemeriksaan &amp; Skor OHI-S
         </span>
         <ArrowRight class="size-[18px]" aria-hidden="true" />
       </NuxtLink>

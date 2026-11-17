@@ -132,8 +132,6 @@ function optionLabel(patient: PatientDto) {
           </span>
           <span class="flex items-center gap-2 font-caption text-caption text-text-muted">
             <span>{{ optionLabel(patient) }}</span>
-            <span aria-hidden="true">·</span>
-            <span>{{ patient.healthyTeeth }} gigi sehat</span>
             <span v-if="patient.allergyAntibiotics" class="text-status-danger">Alergi obat</span>
           </span>
         </button>

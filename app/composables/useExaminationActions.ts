@@ -76,7 +76,7 @@ export function useExaminationActions() {
       return
     }
     if (!draft.canSave.value) {
-      toast.error('Lengkapi dokter pemeriksa sebelum menyimpan.')
+      toast.error('Lengkapi dokter pemeriksa dan data scaling sebelum menyimpan.')
       return
     }
 

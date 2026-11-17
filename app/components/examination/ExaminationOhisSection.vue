@@ -40,14 +40,14 @@ function setSurface(fdiNumber: number, value: unknown) {
       <div class="flex items-center gap-2">
         <ClipboardCheck class="size-5 text-primary" aria-hidden="true" />
         <h2 class="font-headline-sm text-headline-sm font-semibold text-text-primary">
-          3. Penilaian Indeks Higienitas Mulut (OHI-S)
+          2. Penilaian Indeks Higienitas Mulut (OHI-S)
         </h2>
       </div>
       <span class="font-caption text-caption text-text-muted">Greene &amp; Vermillion · 6 Gigi Indeks</span>
     </div>
 
     <div class="flex gap-space-md">
-      <div class="overflow-x-auto rounded-xl border border-border-subtle">
+      <div class="min-w-[50vw] overflow-x-auto rounded-xl border border-border-subtle">
         <table class="w-full min-w-[720px] border-collapse text-left">
           <thead>
             <tr class="bg-surface-container-low">
@@ -116,7 +116,7 @@ function setSurface(fdiNumber: number, value: unknown) {
         </table>
       </div>
 
-      <div class="max-w-xs grid grid-cols-1 gap-space-md rounded-xl bg-primary-surface p-space-lg">
+      <div class="w-full grid grid-cols-1 gap-space-md rounded-xl bg-primary-surface p-space-lg">
         <h1 class="font-bold">Kalkulasi Otomatis OHI-S</h1>
         <p class="font-caption text-caption text-text-muted">
           Formula: DI-S = Total Debris / 6 &nbsp;·&nbsp; CI-S = Total Kalkulus / 6 &nbsp;·&nbsp; OHI-S =
@@ -129,7 +129,7 @@ function setSurface(fdiNumber: number, value: unknown) {
               { label: 'DI-S (Debris Index)', value: debrisIndex, sum: debrisSum, color: 'text-status-info' },
               { label: 'CI-S (Calculus Index)', value: calculusIndex, sum: calculusSum, color: 'text-status-warning' },
             ]" :key="metric.label"
-              class="flex flex-col items-center justify-between rounded-lg bg-surface-card px-3 py-2.5 shadow-sm">
+              class="flex flex-col items-center w-full justify-between rounded-lg bg-surface-card px-3 py-2.5 shadow-sm">
               <div class="flex flex-col">
                 <span class="text-xs text-text-secondary">{{ metric.label }}</span>
               </div>

@@ -148,6 +148,7 @@ type="y" :tick-format="yTickFormat" :tick-line="false" :domain-line="false"
             <ChartTooltip />
             <ChartCrosshair
 v-if="tooltipTemplate" v-bind="crosshairProps"
+              :x="xOf" :y="[routineOf, scalingOf]"
               :template="tooltipTemplate" color="var(--color-routine)" />
           </VisXYContainer>
         </ChartContainer>

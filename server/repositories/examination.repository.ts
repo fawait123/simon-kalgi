@@ -21,8 +21,6 @@ export const examinationSelect = {
   calculusIndex: true,
   ohisScore: true,
   ohisCategory: true,
-  healthyTeeth: true,
-  dmftScore: true,
   status: true,
   nextVisitAt: true,
   nextVisitNote: true,
@@ -47,15 +45,6 @@ export const examinationListSelect = {
 
 export const examinationDetailSelect = {
   ...examinationListSelect,
-  teeth: {
-    select: {
-      id: true,
-      fdiNumber: true,
-      condition: true,
-      note: true,
-    },
-    orderBy: { fdiNumber: 'asc' as const },
-  },
   indexScores: {
     select: {
       id: true,
@@ -65,6 +54,16 @@ export const examinationDetailSelect = {
       calculusValue: true,
     },
     orderBy: { fdiNumber: 'asc' as const },
+  },
+  scalingRecord: {
+    select: {
+      id: true,
+      performedAt: true,
+      scalingType: true,
+      quadrants: true,
+      operatorName: true,
+      note: true,
+    },
   },
 } satisfies Prisma.ExaminationSelect
 

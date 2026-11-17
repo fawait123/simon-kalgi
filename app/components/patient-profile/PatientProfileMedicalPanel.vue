@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { PatientProfileDto } from '~~/shared/types/patient-profile'
-import { AlertTriangle, BadgeCheck, Ban, HeartPulse, Info, Stethoscope } from 'lucide-vue-next'
+import { AlertTriangle, Ban, HeartPulse, Info, Stethoscope } from 'lucide-vue-next'
 import { formatDateId } from '~/lib/format'
 
 const props = defineProps<{ profile: PatientProfileDto }>()
@@ -94,11 +94,6 @@ const conditions = computed(() => [
           {{ profile.lastVisitAt ? formatDateId(profile.lastVisitAt) : 'Belum ada kunjungan tercatat' }}
         </span>
       </div>
-    </div>
-
-    <div v-if="profile.odontogramNote" class="flex items-start gap-space-sm rounded-lg bg-surface-container-low p-space-md">
-      <BadgeCheck class="mt-0.5 size-5 shrink-0 text-primary" aria-hidden="true" />
-      <p class="font-body-sm text-body-sm text-text-secondary">{{ profile.odontogramNote }}</p>
     </div>
 
     <div class="flex items-start gap-2.5 rounded-lg border border-status-info/20 bg-status-info-bg p-space-sm">

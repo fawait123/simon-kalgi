@@ -125,7 +125,7 @@ const onSubmit = handleSubmit((values) => {
           <DialogDescription class="font-caption text-caption text-text-secondary">
             {{ isEdit
               ? 'Perbarui informasi demografi dan kontak pasien.'
-              : 'Lengkapi profil pasien untuk sinkronisasi odontogram dan OHI-S.' }}
+              : 'Lengkapi profil pasien untuk sinkronisasi pemeriksaan dan OHI-S.' }}
           </DialogDescription>
         </div>
       </div>
@@ -313,7 +313,7 @@ const onSubmit = handleSubmit((values) => {
           class="flex items-start gap-2.5 rounded-lg border border-status-info/20 bg-status-info-bg p-space-sm">
           <Info class="mt-0.5 size-5 shrink-0 text-status-info" aria-hidden="true" />
           <p class="font-caption text-caption text-text-secondary">
-            Perubahan nama dan kontak pasien akan otomatis tersinkron ke rekapan rekam medis odontogram dan histori
+            Perubahan nama dan kontak pasien akan otomatis tersinkron ke rekapan rekam medis dan histori
             scoring OHI-S di sistem klinik.
           </p>
         </div>

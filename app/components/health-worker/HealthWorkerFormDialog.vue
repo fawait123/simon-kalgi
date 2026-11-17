@@ -47,7 +47,7 @@ const employmentOptions = [
 ]
 
 const accessOptions = [
-  { value: 'dokter', label: 'Dokter Gigi (Full Akses Odontogram & Resep)' },
+  { value: 'dokter', label: 'Dokter Gigi (Akses Penuh Pemeriksaan & Resep)' },
   { value: 'perawat', label: 'Perawat Gigi (Pencatatan OHI-S & Skrining)' },
   { value: 'admin', label: 'Admin Medis (Master Data)' },
 ]

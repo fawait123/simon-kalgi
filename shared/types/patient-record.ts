@@ -7,8 +7,6 @@ export interface PatientExamSessionDto {
   examinerName: string
   ohisScore: number
   ohisCategory: OhisCategory
-  healthyTeeth: number
-  dmftScore: number
   chiefComplaint: string
   nextVisitAt: string | null
 }

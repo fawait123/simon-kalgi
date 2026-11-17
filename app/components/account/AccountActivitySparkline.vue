@@ -59,7 +59,7 @@ function formatDayLabel(isoDate: string) {
   <div class="flex flex-col gap-2">
     <div class="flex items-baseline justify-between gap-2">
       <span class="font-caption text-caption font-semibold uppercase tracking-wider text-text-muted">
-        Aktivitas Evaluasi Odontogram (7 Hari)
+        Aktivitas Pemeriksaan (7 Hari)
       </span>
       <span class="font-label-md text-label-md text-primary">{{ props.activity?.total ?? 0 }} Pasien</span>
     </div>
@@ -85,8 +85,8 @@ function formatDayLabel(isoDate: string) {
           <ChartCrosshair
             v-if="tooltipTemplate"
             :template="tooltipTemplate"
-            :x-accessor="xOf"
-            :y-accessor="yOf"
+            :x="xOf"
+            :y="yOf"
             :snap-to-data="true"
             color="var(--color-countText)"
           />

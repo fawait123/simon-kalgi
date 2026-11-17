@@ -60,7 +60,7 @@ export const loginRoleConfigs: Record<LoginRole, LoginRoleConfig> = {
     placeholder: 'contoh: drg.sarah, ns.dimas, atau adm.klinik',
     cta: 'Masuk ke Konsol Klinik',
     description:
-      'Masuk sebagai dokter, perawat gigi, atau administrator klinik untuk mengelola odontogram, rekam medis, dan data klinik.',
+      'Masuk sebagai dokter, perawat gigi, atau administrator klinik untuk mengelola pemeriksaan, rekam medis, dan data klinik.',
   },
   pasien: {
     value: 'pasien',

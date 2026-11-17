@@ -5,24 +5,17 @@ import type {
   ExaminationStatus,
   HeartRhythm,
   IndexSurface,
-  ToothCondition,
+  ScalingType,
 } from '~~/shared/schemas/examination.schema'
 import type { ExaminationDetailDto } from '~~/shared/types/examination'
 import type { PatientDto } from '~~/shared/types/patient'
 import {
-  lowerArchTeeth,
   mucosaOptions,
   ohisBands,
   ohisCategoryOf,
   ohisIndexTeeth,
   roundScore,
-  upperArchTeeth,
 } from '~~/shared/types/examination'
-
-export interface ToothDraftState {
-  condition: ToothCondition
-  note: string
-}
 
 export interface IndexToothDraftState {
   fdiNumber: number
@@ -41,7 +34,6 @@ interface StoredExaminationDraft {
   bloodPressure: string
   heartRate: string
   heartRhythm: HeartRhythm
-  teeth: Record<string, ToothDraftState>
   indexScores: IndexToothDraftState[]
   gingivaCondition: string
   mobilityDegree: number
@@ -49,12 +41,14 @@ interface StoredExaminationDraft {
   prescriptionNote: string
   hygieneDiagnosis: string
   planOfAction: string[]
+  scalingPerformed: boolean
+  scalingType: ScalingType
+  scalingQuadrants: string
+  scalingNote: string
   nextVisitAt: string
   nextVisitNote: string
   savedAt: string
 }
-
-const ALL_FDI = [...upperArchTeeth, ...lowerArchTeeth]
 
 function pad(value: number) {
   return String(value).padStart(2, '0')
@@ -72,13 +66,6 @@ export function toDateInputValue(value: Date | string | null | undefined) {
 function todayInputValue() {
   const now = new Date()
   return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
-}
-
-function defaultTeeth(): Record<string, ToothDraftState> {
-  return ALL_FDI.reduce<Record<string, ToothDraftState>>((acc, fdi) => {
-    acc[String(fdi)] = { condition: 'sehat', note: '' }
-    return acc
-  }, {})
 }
 
 function defaultIndexScores(): IndexToothDraftState[] {
@@ -107,8 +94,6 @@ export function createExaminationDraft() {
   const bloodPressure = ref('')
   const heartRate = ref('')
   const heartRhythm = ref<HeartRhythm>('reguler')
-  const teeth = ref<Record<string, ToothDraftState>>(defaultTeeth())
-  const selectedFdi = ref<number | null>(null)
   const indexScores = ref<IndexToothDraftState[]>(defaultIndexScores())
   const gingivaCondition = ref('')
   const mobilityDegree = ref(0)
@@ -116,6 +101,10 @@ export function createExaminationDraft() {
   const prescriptionNote = ref('')
   const hygieneDiagnosis = ref('')
   const planOfAction = ref<string[]>([])
+  const scalingPerformed = ref(false)
+  const scalingType = ref<ScalingType>('supragingiva')
+  const scalingQuadrants = ref('Seluruh kuadran')
+  const scalingNote = ref('')
   const nextVisitAt = ref('')
   const nextVisitNote = ref('')
   const savedDraftAt = ref<string | null>(null)
@@ -135,25 +124,11 @@ export function createExaminationDraft() {
     () => ohisBands.find(band => band.category === ohisCategory.value) ?? ohisBands[0],
   )
 
-  const toothCounts = computed(() =>
-    Object.values(teeth.value).reduce<Record<ToothCondition, number>>(
-      (acc, row) => {
-        acc[row.condition] += 1
-        return acc
-      },
-      { sehat: 0, karies: 0, tambalan: 0, mahkota: 0, hilang: 0 },
-    ),
+  const canSave = computed(() =>
+    Boolean(patient.value)
+    && examinerName.value.trim().length >= 3
+    && (!scalingPerformed.value || Boolean(scalingType.value && scalingQuadrants.value.trim())),
   )
-  const healthyTeeth = computed(() => toothCounts.value.sehat)
-  const dmftScore = computed(
-    () => toothCounts.value.karies + toothCounts.value.tambalan + toothCounts.value.hilang,
-  )
-  const recordedTeeth = computed(() => Object.keys(teeth.value).length)
-  const selectedTooth = computed(() =>
-    selectedFdi.value === null ? null : teeth.value[String(selectedFdi.value)] ?? null,
-  )
-
-  const canSave = computed(() => Boolean(patient.value) && examinerName.value.trim().length >= 3)
 
   function storageKey() {
     return patient.value ? `dentacare:examination-draft:${patient.value.id}` : null
@@ -168,7 +143,6 @@ export function createExaminationDraft() {
       bloodPressure: bloodPressure.value,
       heartRate: heartRate.value,
       heartRhythm: heartRhythm.value,
-      teeth: teeth.value,
       indexScores: indexScores.value,
       gingivaCondition: gingivaCondition.value,
       mobilityDegree: mobilityDegree.value,
@@ -176,6 +150,10 @@ export function createExaminationDraft() {
       prescriptionNote: prescriptionNote.value,
       hygieneDiagnosis: hygieneDiagnosis.value,
       planOfAction: planOfAction.value,
+      scalingPerformed: scalingPerformed.value,
+      scalingType: scalingType.value,
+      scalingQuadrants: scalingQuadrants.value,
+      scalingNote: scalingNote.value,
       nextVisitAt: nextVisitAt.value,
       nextVisitNote: nextVisitNote.value,
       savedAt: savedDraftAt.value ?? clockTime(),
@@ -190,7 +168,6 @@ export function createExaminationDraft() {
     bloodPressure.value = stored.bloodPressure ?? ''
     heartRate.value = stored.heartRate ?? ''
     heartRhythm.value = stored.heartRhythm ?? 'reguler'
-    teeth.value = stored.teeth ? { ...defaultTeeth(), ...stored.teeth } : defaultTeeth()
     indexScores.value = stored.indexScores?.length
       ? stored.indexScores
       : defaultIndexScores()
@@ -200,9 +177,12 @@ export function createExaminationDraft() {
     prescriptionNote.value = stored.prescriptionNote ?? ''
     hygieneDiagnosis.value = stored.hygieneDiagnosis ?? ''
     planOfAction.value = stored.planOfAction ?? []
+    scalingPerformed.value = stored.scalingPerformed ?? false
+    scalingType.value = stored.scalingType ?? 'supragingiva'
+    scalingQuadrants.value = stored.scalingQuadrants ?? 'Seluruh kuadran'
+    scalingNote.value = stored.scalingNote ?? ''
     nextVisitAt.value = stored.nextVisitAt ?? ''
     nextVisitNote.value = stored.nextVisitNote ?? ''
-    selectedFdi.value = null
   }
 
   function clearStoredDraft() {
@@ -260,8 +240,6 @@ export function createExaminationDraft() {
     bloodPressure.value = ''
     heartRate.value = ''
     heartRhythm.value = 'reguler'
-    teeth.value = defaultTeeth()
-    selectedFdi.value = null
     indexScores.value = defaultIndexScores()
     gingivaCondition.value = ''
     mobilityDegree.value = 0
@@ -269,6 +247,10 @@ export function createExaminationDraft() {
     prescriptionNote.value = ''
     hygieneDiagnosis.value = ''
     planOfAction.value = []
+    scalingPerformed.value = false
+    scalingType.value = 'supragingiva'
+    scalingQuadrants.value = 'Seluruh kuadran'
+    scalingNote.value = ''
     nextVisitAt.value = ''
     nextVisitNote.value = ''
     savedDraftAt.value = null
@@ -290,24 +272,6 @@ export function createExaminationDraft() {
       'Scaling & Root Planing Rahang Atas & Bawah (Kode: DT-04)',
       'Edukasi Teknik Menyikat Gigi (Bass Technique & Dental Floss)',
     ]
-  }
-
-  function selectTooth(fdiNumber: number) {
-    selectedFdi.value = selectedFdi.value === fdiNumber ? null : fdiNumber
-  }
-
-  function clearToothSelection() {
-    selectedFdi.value = null
-  }
-
-  function setToothCondition(fdiNumber: number, condition: ToothCondition) {
-    const current = teeth.value[String(fdiNumber)] ?? { condition: 'sehat', note: '' }
-    teeth.value = { ...teeth.value, [String(fdiNumber)]: { ...current, condition } }
-  }
-
-  function setToothNote(fdiNumber: number, note: string) {
-    const current = teeth.value[String(fdiNumber)] ?? { condition: 'sehat', note: '' }
-    teeth.value = { ...teeth.value, [String(fdiNumber)]: { ...current, note } }
   }
 
   function setIndexValue(fdiNumber: number, kind: 'debris' | 'calculus', value: number) {
@@ -337,10 +301,6 @@ export function createExaminationDraft() {
     bloodPressure.value = exam.bloodPressure ?? ''
     heartRate.value = exam.heartRate === null ? '' : String(exam.heartRate)
     heartRhythm.value = exam.heartRhythm
-    teeth.value = exam.teeth.reduce<Record<string, ToothDraftState>>((acc, tooth) => {
-      acc[String(tooth.fdiNumber)] = { condition: tooth.condition, note: tooth.note ?? '' }
-      return acc
-    }, defaultTeeth())
     indexScores.value = ohisIndexTeeth.map((spec) => {
       const saved = exam.indexScores.find(row => row.fdiNumber === spec.fdiNumber)
       return saved
@@ -358,9 +318,12 @@ export function createExaminationDraft() {
     prescriptionNote.value = exam.prescriptionNote ?? ''
     hygieneDiagnosis.value = exam.hygieneDiagnosis ?? ''
     planOfAction.value = [...exam.planOfAction]
+    scalingPerformed.value = Boolean(exam.scalingRecord)
+    scalingType.value = exam.scalingRecord?.scalingType ?? 'supragingiva'
+    scalingQuadrants.value = exam.scalingRecord?.quadrants ?? 'Seluruh kuadran'
+    scalingNote.value = exam.scalingRecord?.note ?? ''
     nextVisitAt.value = toDateInputValue(exam.nextVisitAt)
     nextVisitNote.value = exam.nextVisitNote ?? ''
-    selectedFdi.value = null
     savedDraftAt.value = null
     nextTick(() => {
       autosaveEnabled.value = true
@@ -377,11 +340,6 @@ export function createExaminationDraft() {
       bloodPressure: bloodPressure.value.trim() || undefined,
       heartRate: heartRate.value.trim() === '' ? undefined : Number(heartRate.value),
       heartRhythm: heartRhythm.value,
-      teeth: Object.entries(teeth.value).map(([fdi, row]) => ({
-        fdiNumber: Number(fdi),
-        condition: row.condition,
-        note: row.note.trim() || undefined,
-      })),
       indexScores: indexScores.value.map(row => ({
         fdiNumber: row.fdiNumber,
         surface: row.surface,
@@ -394,6 +352,12 @@ export function createExaminationDraft() {
       prescriptionNote: prescriptionNote.value.trim() || undefined,
       hygieneDiagnosis: hygieneDiagnosis.value.trim() || undefined,
       planOfAction: planOfAction.value,
+      scalingPerformed: scalingPerformed.value,
+      scalingType: scalingPerformed.value ? scalingType.value : undefined,
+      scalingQuadrants: scalingPerformed.value
+        ? scalingQuadrants.value.trim() || 'Seluruh kuadran'
+        : undefined,
+      scalingNote: scalingPerformed.value ? scalingNote.value.trim() || undefined : undefined,
       status: nextStatus,
       nextVisitAt: nextVisitAt.value ? new Date(nextVisitAt.value) : undefined,
       nextVisitNote: nextVisitNote.value.trim() || undefined,
@@ -412,9 +376,6 @@ export function createExaminationDraft() {
     bloodPressure,
     heartRate,
     heartRhythm,
-    teeth,
-    selectedFdi,
-    selectedTooth,
     indexScores,
     gingivaCondition,
     mobilityDegree,
@@ -422,6 +383,10 @@ export function createExaminationDraft() {
     prescriptionNote,
     hygieneDiagnosis,
     planOfAction,
+    scalingPerformed,
+    scalingType,
+    scalingQuadrants,
+    scalingNote,
     nextVisitAt,
     nextVisitNote,
     savedDraftAt,
@@ -434,24 +399,16 @@ export function createExaminationDraft() {
     ohisScore,
     ohisCategory,
     activeBand,
-    toothCounts,
-    healthyTeeth,
-    dmftScore,
-    recordedTeeth,
     canSave,
     applyClinicalTemplate,
     applyStored,
     clearStoredDraft,
-    clearToothSelection,
     loadFromExam,
     resetForm,
     restoreStoredDraft,
-    selectTooth,
     serialize,
     setIndexSurface,
     setIndexValue,
-    setToothCondition,
-    setToothNote,
     storageKey,
     toPayload,
     togglePlan,

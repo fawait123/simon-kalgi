@@ -12,8 +12,6 @@ const sessionSelect = {
   examinerName: true,
   ohisScore: true,
   ohisCategory: true,
-  healthyTeeth: true,
-  dmftScore: true,
   chiefComplaint: true,
   nextVisitAt: true,
 } satisfies Prisma.ExaminationSelect

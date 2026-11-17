@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import type { ExaminationDetailDto, ExaminationToothDto } from '~~/shared/types/examination'
 import { ChevronRight, Printer } from 'lucide-vue-next'
 import {
   usePatientExamDetailQuery,
@@ -14,7 +13,6 @@ const sessions = computed(() => sessionsQuery.data.value?.data ?? [])
 const latestId = computed(() => sessionsQuery.data.value?.meta.latestId ?? null)
 
 const selectedSessionId = ref<string | null>(null)
-const selectedFdi = ref<number | null>(null)
 
 const detailQuery = usePatientExamDetailQuery(() => selectedSessionId.value)
 const detail = computed(() => detailQuery.data.value?.data ?? null)
@@ -25,27 +23,9 @@ const sessionErrorText = computed(() =>
       ?? 'Riwayat pemeriksaan Anda tidak dapat dijangkau.'
     : undefined)
 
-/** Gigi tanpa baris tetap bisa dibuka: kondisinya sehat, catatannya kosong. */
-const selectedTooth = computed<ExaminationToothDto | null>(() => {
-  if (!detail.value || selectedFdi.value === null) return null
-  const fdiNumber = selectedFdi.value
-  return detail.value.teeth.find(tooth => tooth.fdiNumber === fdiNumber)
-    ?? { id: `virtual-${fdiNumber}`, fdiNumber, condition: 'sehat', note: null }
-})
-
-function firstRecordedFdi(exam: ExaminationDetailDto) {
-  return exam.teeth.find(tooth => tooth.condition !== 'sehat')?.fdiNumber ?? exam.teeth[0]?.fdiNumber ?? null
-}
-
 watch(latestId, (id) => {
   if (id && !selectedSessionId.value) selectedSessionId.value = id
 }, { immediate: true })
-
-// Kunci ganti sesi = seleksi gigi harus ikut pindah, kalau tidak kartu detail menunjuk FDI
-// yang mungkin hanya ada pada sesi sebelumnya.
-watch(detail, (exam) => {
-  selectedFdi.value = exam ? firstRecordedFdi(exam) : null
-})
 </script>
 
 <template>
@@ -58,11 +38,11 @@ watch(detail, (exam) => {
           <span class="font-body-lg text-body-lg text-primary">Pemeriksaan Gigi</span>
         </p>
         <h1 class="font-headline-lg text-headline-lg font-bold tracking-tight text-text-primary">
-          Hasil Pemeriksaan Gigi &amp; Odontogram
+          Hasil Pemeriksaan Gigi &amp; Mulut
         </h1>
         <p class="max-w-2xl font-body-md text-body-md text-text-secondary">
-          Rekam medis kondisi gigi Anda, indeks kebersihan rongga mulut (OHI-S), dan rencana perawatan
-          yang dicatat dokter pada setiap kunjungan.
+          Rekam medis indeks kebersihan rongga mulut (OHI-S), kondisi jaringan mulut, dan rencana
+          perawatan yang dicatat dokter pada setiap kunjungan.
         </p>
       </div>
 
@@ -127,14 +107,6 @@ watch(detail, (exam) => {
         </div>
 
         <template v-else>
-          <PatientRecordOdontogram
-            :teeth="detail.teeth"
-            :selected-fdi="selectedFdi"
-            :healthy-teeth="detail.healthyTeeth"
-            :dmft-score="detail.dmftScore"
-            @select="selectedFdi = $event"
-          />
-          <PatientRecordToothDetail :tooth="selectedTooth" />
           <PatientRecordOhisPanel :detail="detail" />
           <PatientRecordConditionCards :detail="detail" />
           <PatientRecordNextVisitCard :detail="detail" />

@@ -1,10 +1,6 @@
 import { z } from 'zod'
 import { ohisCategorySchema } from '~~/shared/schemas/patient.schema'
 
-export const toothConditionSchema = z.enum(['sehat', 'karies', 'tambalan', 'mahkota', 'hilang'], {
-  errorMap: () => ({ message: 'Pilih kondisi gigi' }),
-})
-
 export const indexSurfaceSchema = z.enum(['buccal', 'labial', 'lingual', 'palatal'], {
   errorMap: () => ({ message: 'Pilih permukaan uji' }),
 })
@@ -15,6 +11,10 @@ export const heartRhythmSchema = z.enum(['reguler', 'tidak_reguler'], {
 
 export const examinationStatusSchema = z.enum(['draft', 'final'], {
   errorMap: () => ({ message: 'Status pemeriksaan tidak valid' }),
+})
+
+export const scalingTypeSchema = z.enum(['supragingiva', 'subgingiva', 'root_planing'], {
+  errorMap: () => ({ message: 'Pilih tipe scaling' }),
 })
 
 /** Status rekam medis untuk arsip; diturunkan dari status, jadwal kontrol, dan rencana tindakan. */
@@ -47,16 +47,6 @@ const optionalDate = z.preprocess(
   },
   z.coerce.date({ errorMap: () => ({ message: 'Tanggal tidak valid' }) }).optional(),
 )
-
-export const examinationToothSchema = z.object({
-  fdiNumber: z.coerce
-    .number({ invalid_type_error: 'Nomor gigi tidak valid' })
-    .int('Nomor gigi harus bilangan bulat')
-    .min(11, 'Nomor gigi FDI minimal 11')
-    .max(48, 'Nomor gigi FDI maksimal 48'),
-  condition: toothConditionSchema,
-  note: optionalText(120, 'Catatan gigi'),
-})
 
 export const examinationIndexScoreSchema = z.object({
   fdiNumber: z.coerce
@@ -94,10 +84,6 @@ const examinationFields = z.object({
       .optional(),
   ),
   heartRhythm: heartRhythmSchema.default('reguler'),
-  teeth: z
-    .array(examinationToothSchema)
-    .max(32, 'Odontogram maksimal 32 gigi permanen')
-    .default([]),
   indexScores: z
     .array(examinationIndexScoreSchema)
     .length(6, 'OHI-S harus menilai 6 gigi indeks standar')
@@ -119,6 +105,10 @@ const examinationFields = z.object({
     .array(z.string().trim().min(3, 'Tindakan minimal 3 karakter').max(200))
     .max(10, 'Maksimal 10 rencana tindakan')
     .default([]),
+  scalingPerformed: z.boolean().default(false),
+  scalingType: scalingTypeSchema.optional(),
+  scalingQuadrants: optionalText(120, 'Kuadran scaling'),
+  scalingNote: optionalText(300, 'Catatan scaling'),
   status: examinationStatusSchema.default('draft'),
   nextVisitAt: optionalDate,
   nextVisitNote: optionalText(200, 'Catatan jadwal kontrol'),
@@ -130,10 +120,27 @@ function controlAfterExamination(data: { examDate?: Date; nextVisitAt?: Date }) 
   return data.nextVisitAt.getTime() > data.examDate.getTime()
 }
 
-export const createExaminationSchema = examinationFields.refine(controlAfterExamination, {
-  message: 'Jadwal kontrol harus setelah tanggal pemeriksaan',
-  path: ['nextVisitAt'],
-})
+function scalingRecordingComplete(data: {
+  scalingPerformed?: boolean
+  scalingType?: string
+  scalingQuadrants?: string
+}) {
+  if (!data.scalingPerformed)
+    return true
+  return Boolean(data.scalingType && data.scalingQuadrants?.trim())
+}
+
+const scalingRecordingRefinement = {
+  message: 'Lengkapi tipe dan kuadran tindakan scaling',
+  path: ['scalingType'],
+}
+
+export const createExaminationSchema = examinationFields
+  .refine(controlAfterExamination, {
+    message: 'Jadwal kontrol harus setelah tanggal pemeriksaan',
+    path: ['nextVisitAt'],
+  })
+  .refine(scalingRecordingComplete, scalingRecordingRefinement)
 
 export const updateExaminationSchema = examinationFields
   .omit({ patientId: true })
@@ -142,6 +149,7 @@ export const updateExaminationSchema = examinationFields
     message: 'Jadwal kontrol harus setelah tanggal pemeriksaan',
     path: ['nextVisitAt'],
   })
+  .refine(scalingRecordingComplete, scalingRecordingRefinement)
 
 export const examinationListQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
@@ -163,7 +171,6 @@ export const examinationListQuerySchema = z.object({
 
 export type CreateExaminationInput = z.infer<typeof createExaminationSchema>
 export type UpdateExaminationInput = z.infer<typeof updateExaminationSchema>
-export type ExaminationToothInput = z.infer<typeof examinationToothSchema>
 export type ExaminationIndexScoreInput = z.infer<typeof examinationIndexScoreSchema>
 export type ExaminationListQuery = z.output<typeof examinationListQuerySchema>
 /** Parameter list dari client: field yang punya default tidak wajib dikirim. */
@@ -172,7 +179,7 @@ export type ExaminationListQueryInput
 export type ExaminationRecordStatus = z.infer<typeof examinationRecordStatusSchema>
 export type ExaminationRecordStatusFilter = ExaminationListQuery['recordStatus']
 export type ExaminationOhisFilter = ExaminationListQuery['ohis']
-export type ToothCondition = z.infer<typeof toothConditionSchema>
 export type IndexSurface = z.infer<typeof indexSurfaceSchema>
 export type HeartRhythm = z.infer<typeof heartRhythmSchema>
 export type ExaminationStatus = z.infer<typeof examinationStatusSchema>
+export type ScalingType = z.infer<typeof scalingTypeSchema>

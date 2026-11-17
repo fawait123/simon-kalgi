@@ -29,9 +29,6 @@ export interface PatientDto {
   debrisIndex: number | null
   calculusIndex: number | null
   ohisCategory: OhisCategory | null
-  healthyTeeth: number
-  odontogramNote: string | null
-  dmftScore: number | null
   lastVisitAt: string | null
   nextVisitAt: string | null
   nextVisitClinician: string | null

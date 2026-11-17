@@ -4,6 +4,7 @@ import {
   mobilityOptions,
   mucosaOptions,
   recommendationCatalog,
+  scalingTypeOptions,
 } from '~~/shared/types/examination'
 import { formatShortDateId } from '~/lib/format'
 
@@ -14,6 +15,10 @@ const {
   mucosaCondition,
   prescriptionNote,
   planOfAction,
+  scalingPerformed,
+  scalingType,
+  scalingQuadrants,
+  scalingNote,
   nextVisitAt,
   nextVisitNote,
 } = draft
@@ -21,6 +26,12 @@ const {
 function setMobility(value: unknown) {
   const degree = Number(value)
   mobilityDegree.value = Number.isNaN(degree) ? 0 : degree
+}
+
+function setScalingType(value: unknown) {
+  const match = scalingTypeOptions.find(option => option.value === value)
+  if (match)
+    scalingType.value = match.value
 }
 
 function togglePlan(label: string, checked: boolean) {
@@ -50,7 +61,7 @@ const controlHint = computed(() => {
       <div class="flex items-center gap-2">
         <Stethoscope class="size-5 text-primary" aria-hidden="true" />
         <h2 class="font-headline-sm text-headline-sm font-semibold text-text-primary">
-          4. Jaringan Lunak, Terapi &amp; Rencana Tindakan
+          3. Jaringan Lunak, Terapi &amp; Rencana Tindakan
         </h2>
       </div>
       <span class="font-caption text-caption text-text-muted">
@@ -150,6 +161,83 @@ const controlHint = computed(() => {
             />
             <span class="font-body-sm text-body-sm text-text-secondary">{{ label }}</span>
           </label>
+        </fieldset>
+
+        <fieldset class="flex flex-col gap-2 rounded-xl border border-border-subtle p-space-md">
+          <legend class="px-1 font-label-md text-label-md font-semibold text-text-primary">
+            Tindakan Scaling
+          </legend>
+          <label
+            class="flex cursor-pointer items-start gap-2.5 rounded-lg px-2 py-2 transition-colors hover:bg-surface-container-low"
+          >
+            <Checkbox
+              :model-value="scalingPerformed"
+              class="mt-0.5"
+              @update:model-value="scalingPerformed = Boolean($event)"
+            />
+            <span class="font-body-sm text-body-sm text-text-secondary">
+              Scaling dilakukan pada kunjungan ini
+            </span>
+          </label>
+
+          <div
+            v-if="scalingPerformed"
+            class="grid grid-cols-1 gap-2 border-t border-border-subtle pt-2 sm:grid-cols-2"
+          >
+            <div class="flex flex-col gap-1">
+              <Label for="examination-scaling-type" class="font-caption text-caption text-text-muted">
+                Tipe Scaling
+              </Label>
+              <Select :model-value="scalingType" @update:model-value="setScalingType">
+                <SelectTrigger
+                  id="examination-scaling-type"
+                  aria-label="Tipe scaling"
+                  class="h-10 rounded-lg border-border-subtle bg-bg-canvas font-body-sm"
+                >
+                  <SelectValue placeholder="Pilih tipe scaling" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem
+                    v-for="option in scalingTypeOptions"
+                    :key="option.value"
+                    :value="option.value"
+                  >
+                    {{ option.label }}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div class="flex flex-col gap-1">
+              <Label for="examination-scaling-quadrants" class="font-caption text-caption text-text-muted">
+                Kuadran / Area
+              </Label>
+              <Input
+                id="examination-scaling-quadrants"
+                v-model="scalingQuadrants"
+                autocomplete="off"
+                class="h-10 rounded-lg bg-bg-canvas font-body-md"
+                placeholder="Mis. RA kanan, RB kiri"
+              />
+            </div>
+
+            <div class="flex flex-col gap-1 sm:col-span-2">
+              <Label for="examination-scaling-note" class="font-caption text-caption text-text-muted">
+                Catatan Scaling
+              </Label>
+              <Input
+                id="examination-scaling-note"
+                v-model="scalingNote"
+                autocomplete="off"
+                class="h-10 rounded-lg bg-bg-canvas font-body-md"
+                placeholder="Mis. dilakukan bertahap, evaluasi 7 hari"
+              />
+            </div>
+
+            <p class="font-caption text-caption text-text-muted sm:col-span-2">
+              Operator: {{ draft.examinerLabel || 'Petugas pemeriksa' }}
+            </p>
+          </div>
         </fieldset>
 
         <div class="flex flex-col gap-2.5 rounded-xl bg-primary-surface p-space-md">

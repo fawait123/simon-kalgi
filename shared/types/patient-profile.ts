@@ -19,8 +19,6 @@ export interface PatientProfileDto {
   diabetes: boolean
   ohisScore: number | null
   ohisCategory: OhisCategory | null
-  healthyTeeth: number
-  odontogramNote: string | null
   lastVisitAt: string | null
   nextVisitAt: string | null
   nextVisitClinician: string | null

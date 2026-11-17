@@ -85,7 +85,7 @@ export const employmentStatusLabel: Record<EmploymentStatus, string> = {
 }
 
 export const accessLevelLabel: Record<AccessLevel, string> = {
-  dokter: 'Dokter Gigi (Full Akses Odontogram & Resep)',
+  dokter: 'Dokter Gigi (Akses Penuh Pemeriksaan & Resep)',
   perawat: 'Perawat Gigi (Pencatatan OHI-S & Skrining)',
   admin: 'Admin Medis (Master Data)',
 }

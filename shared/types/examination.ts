@@ -4,7 +4,7 @@ import type {
   HeartRhythm,
   IndexSurface,
   OhisCategory,
-  ToothCondition,
+  ScalingType,
 } from '@prisma/client'
 
 import type { ExaminationRecordStatus } from '~~/shared/schemas/examination.schema'
@@ -22,19 +22,21 @@ export interface ExaminationExaminerRef {
   specialization: string | null
 }
 
-export interface ExaminationToothDto {
-  id: string
-  fdiNumber: number
-  condition: ToothCondition
-  note: string | null
-}
-
 export interface ExaminationIndexScoreDto {
   id: string
   fdiNumber: number
   surface: IndexSurface
   debrisValue: number
   calculusValue: number
+}
+
+export interface ScalingRecordDto {
+  id: string
+  performedAt: string
+  scalingType: ScalingType
+  quadrants: string
+  operatorName: string
+  note: string | null
 }
 
 export interface ExaminationDto {
@@ -57,8 +59,6 @@ export interface ExaminationDto {
   calculusIndex: number
   ohisScore: number
   ohisCategory: OhisCategory
-  healthyTeeth: number
-  dmftScore: number
   status: ExaminationStatus
   nextVisitAt: string | null
   nextVisitNote: string | null
@@ -68,8 +68,8 @@ export interface ExaminationDto {
 
 export interface ExaminationDetailDto extends ExaminationDto {
   patient: ExaminationPatientRef
-  teeth: ExaminationToothDto[]
   indexScores: ExaminationIndexScoreDto[]
+  scalingRecord: ScalingRecordDto | null
 }
 
 export interface ExaminationListItem extends ExaminationDto {
@@ -77,8 +77,6 @@ export interface ExaminationListItem extends ExaminationDto {
   examiner: ExaminationExaminerRef | null
   recordStatus: ExaminationRecordStatus
 }
-
-export type ExaminationRecordTab = 'odontogram' | 'ohis'
 
 export interface ExaminationListResponse {
   data: ExaminationListItem[]
@@ -103,61 +101,6 @@ export interface ExaminationStatsDto {
   averageOhisCategory: OhisCategory
   distribution: ExaminationStatsSegmentDto[]
 }
-
-export const totalPermanentTeeth = 32
-
-export const upperArchTeeth = [18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28]
-export const lowerArchTeeth = [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38]
-
-export const toothTypeByPosition: Record<number, string> = {
-  1: 'Insisivus Sentral',
-  2: 'Insisivus Lateral',
-  3: 'Kaninus',
-  4: 'Premolar 1',
-  5: 'Premolar 2',
-  6: 'Molar 1',
-  7: 'Molar 2',
-  8: 'Molar 3 (Wisdom)',
-}
-
-export const quadrantLabel: Record<number, string> = {
-  1: 'Rahang Atas Kanan',
-  2: 'Rahang Atas Kiri',
-  3: 'Rahang Bawah Kiri',
-  4: 'Rahang Bawah Kanan',
-}
-
-export function toothNameOf(fdiNumber: number) {
-  const quadrant = Math.floor(fdiNumber / 10)
-  const position = fdiNumber % 10
-  return `${quadrantLabel[quadrant] ?? 'Regio'} · ${toothTypeByPosition[position] ?? 'Gigi'}`
-}
-
-export const toothConditionLabel: Record<ToothCondition, string> = {
-  sehat: 'Sehat',
-  karies: 'Karies',
-  tambalan: 'Tambalan',
-  mahkota: 'Mahkota / Crown',
-  hilang: 'Tidak Ada / Ekstraksi',
-}
-
-export const toothConditionClass: Record<ToothCondition, string> = {
-  sehat: 'border-border-subtle bg-surface-card text-text-secondary hover:border-primary-highlight',
-  karies: 'border-status-danger/30 bg-status-danger-bg text-status-danger',
-  tambalan: 'border-status-info/30 bg-status-info-bg text-status-info',
-  mahkota: 'border-status-warning/30 bg-status-warning-bg text-status-warning',
-  hilang: 'border-border-strong bg-bg-canvas text-text-muted',
-}
-
-export const toothConditionSwatch: Record<ToothCondition, string> = {
-  sehat: 'bg-surface-card border border-border-strong',
-  karies: 'bg-status-danger',
-  tambalan: 'bg-status-info',
-  mahkota: 'bg-status-warning',
-  hilang: 'bg-text-muted',
-}
-
-export const toothConditionOrder: ToothCondition[] = ['sehat', 'karies', 'tambalan', 'mahkota', 'hilang']
 
 export interface IndexToothSpec {
   fdiNumber: number
@@ -266,6 +209,18 @@ export const recommendationCatalog = [
   'Ekstraksi Gigi Sulit / Sisa Akar',
   'Rontgen Periapikal Regio Tersuspisi',
   'Aplikasi Fluorid Vernis (Kode: DT-15)',
+]
+
+export const scalingTypeLabel: Record<ScalingType, string> = {
+  supragingiva: 'Scaling Supragingiva',
+  subgingiva: 'Scaling Subgingiva',
+  root_planing: 'Root Planing',
+}
+
+export const scalingTypeOptions: { value: ScalingType, label: string }[] = [
+  { value: 'supragingiva', label: scalingTypeLabel.supragingiva },
+  { value: 'subgingiva', label: scalingTypeLabel.subgingiva },
+  { value: 'root_planing', label: scalingTypeLabel.root_planing },
 ]
 
 export const examinationStatusLabel: Record<ExaminationStatus, string> = {

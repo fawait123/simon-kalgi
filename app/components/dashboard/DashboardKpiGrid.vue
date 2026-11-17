@@ -1,6 +1,17 @@
 <script setup lang="ts">
 import type { DashboardSummaryDto } from '~~/shared/types/dashboard'
-import { ClipboardList, Stethoscope, TriangleAlert, TrendingDown, TrendingUp, Users } from 'lucide-vue-next'
+import {
+  CalendarClock,
+  ClipboardList,
+  Layers,
+  Sparkles,
+  Stethoscope,
+  TriangleAlert,
+  TrendingDown,
+  TrendingUp,
+  UserRound,
+  Users,
+} from 'lucide-vue-next'
 import { isRouteAllowed } from '~~/shared/config/access'
 
 const props = defineProps<{
@@ -10,8 +21,17 @@ const props = defineProps<{
 
 const { user } = useAuthSession()
 const canOpenPatientData = computed(() => isRouteAllowed('/admin/pasien', user.value))
+const canOpenMonitoring = computed(() => isRouteAllowed('/admin/monitoring', user.value))
 
-const patients = computed(() => props.summary?.patients ?? { total: 0, thisMonth: 0, lastMonth: 0 })
+const patients = computed(() => props.summary?.patients ?? {
+  total: 0,
+  thisMonth: 0,
+  lastMonth: 0,
+  adult: 0,
+  withCalculus: 0,
+  scalingDone: 0,
+  needControl: 0,
+})
 const workers = computed(() => props.summary?.workers ?? { active: 0, dentists: 0, nurses: 0 })
 const examinations = computed(() => props.summary?.examinations ?? {
   total: 0,
@@ -41,11 +61,59 @@ const patientGrowth = computed(() => {
 <template>
   <div class="grid grid-cols-1 gap-space-md sm:grid-cols-2 xl:grid-cols-4">
     <template v-if="isPending">
-      <Skeleton v-for="index in 4" :key="`kpi-${index}`" class="h-[150px] w-full rounded-xl" />
+      <Skeleton v-for="index in 8" :key="`kpi-${index}`" class="h-[150px] w-full rounded-xl" />
     </template>
 
     <template v-else>
-      <DashboardKpiCard label="Pasien Terdaftar" :value="patients.total" :icon="Users">
+      <DashboardKpiCard label="Pasien Dewasa" :value="patients.adult" :icon="Users">
+        <template #footer>
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-label-md font-bold text-primary">≥ 18 tahun</span>
+            <span class="text-caption text-text-muted">dari {{ patients.total }} terdaftar</span>
+          </div>
+        </template>
+      </DashboardKpiCard>
+
+      <DashboardKpiCard
+label="Pasien dengan Kalkulus" :value="patients.withCalculus" :icon="Layers"
+        value-class="text-status-warning">
+        <template #footer>
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-caption font-semibold text-status-warning">CI-S &gt; 0</span>
+            <span class="text-caption text-text-muted">skor terakhir pasien</span>
+          </div>
+        </template>
+      </DashboardKpiCard>
+
+      <DashboardKpiCard
+label="Pasien Sudah Scaling" :value="patients.scalingDone" :icon="Sparkles"
+        value-class="text-status-success">
+        <template #footer>
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-caption font-semibold text-status-success">Tindakan tercatat</span>
+            <span class="text-caption text-text-muted">pemeriksaan final</span>
+          </div>
+        </template>
+      </DashboardKpiCard>
+
+      <DashboardKpiCard
+label="Pasien Perlu Kontrol" :value="patients.needControl" :icon="CalendarClock"
+        value-class="text-status-danger">
+        <template #footer>
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-caption font-semibold text-status-danger">≤ 7 hari / terlambat</span>
+            <button
+              v-if="canOpenMonitoring"
+              type="button"
+              class="cursor-pointer rounded text-label-md font-semibold text-primary transition-colors hover:text-primary-hover"
+              @click="navigateTo('/admin/monitoring')">
+              Pantau &rarr;
+            </button>
+          </div>
+        </template>
+      </DashboardKpiCard>
+
+      <DashboardKpiCard label="Pasien Terdaftar" :value="patients.total" :icon="UserRound">
         <template #footer>
           <div class="flex items-center justify-between gap-2">
             <span

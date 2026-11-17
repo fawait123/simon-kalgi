@@ -21,8 +21,8 @@ const actions = useExaminationActions()
         </template>
       </span>
       <span class="font-caption text-caption text-text-muted">
-        Ringkasan: {{ draft.healthyTeeth.value }}/32 gigi sehat · DMFT {{ draft.dmftScore.value }} ·
-        OHI-S {{ formatScore(draft.ohisScore.value) }}
+        Ringkasan: DI-S {{ formatScore(draft.debrisIndex.value) }} · CI-S
+        {{ formatScore(draft.calculusIndex.value) }} · OHI-S {{ formatScore(draft.ohisScore.value) }}
       </span>
     </div>
 

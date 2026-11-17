@@ -1,9 +1,8 @@
 import type { ExaminationDetailDto } from '~~/shared/types/examination'
 import {
   formatScore,
+  ohisIndexTeeth,
   surfaceLabel,
-  toothConditionLabel,
-  toothNameOf,
 } from '~~/shared/types/examination'
 import { genderLabel, ohisCategoryLabel } from '~~/shared/types/patient'
 import { calcAge, formatDateId } from './format'
@@ -20,27 +19,19 @@ function row(label: string, value: string) {
   return `<tr><th>${esc(label)}</th><td>${esc(value)}</td></tr>`
 }
 
+function indexLabelOf(fdiNumber: number) {
+  return ohisIndexTeeth.find(tooth => tooth.fdiNumber === fdiNumber)?.label ?? '-'
+}
+
 function indexRows(exam: ExaminationDetailDto) {
   if (exam.indexScores.length === 0)
     return '<tr><td colspan="4">Belum ada penilaian indeks tercatat.</td></tr>'
   return exam.indexScores
     .map(score => `<tr>
       <td>${score.fdiNumber}</td>
-      <td>${esc(toothNameOf(score.fdiNumber))}</td>
+      <td>${esc(indexLabelOf(score.fdiNumber))}</td>
       <td>${esc(surfaceLabel[score.surface])}</td>
       <td>${score.debrisValue} / ${score.calculusValue}</td>
-    </tr>`)
-    .join('')
-}
-
-function toothRows(exam: ExaminationDetailDto) {
-  if (exam.teeth.length === 0)
-    return '<tr><td colspan="3">Odontogram belum diisi.</td></tr>'
-  return exam.teeth
-    .map(tooth => `<tr>
-      <td>${tooth.fdiNumber}</td>
-      <td>${esc(toothConditionLabel[tooth.condition])}</td>
-      <td>${esc(tooth.note)}</td>
     </tr>`)
     .join('')
 }
@@ -99,20 +90,14 @@ export function printExaminationResume(exam: ExaminationDetailDto) {
   </tbody></table>
 
   <h2>Indeks Kebersihan Mulut</h2>
-  <table><thead><tr><th>FDI</th><th>Nama Gigi</th><th>Permukaan</th><th>Debris / Kalkulus</th></tr></thead>
+  <table><thead><tr><th>FDI</th><th>Lokasi Gigi Indeks</th><th>Permukaan</th><th>Debris / Kalkulus</th></tr></thead>
   <tbody>${indexRows(exam)}</tbody></table>
   <p class="score">
     <span>DI-S <b>${formatScore(exam.debrisIndex)}</b></span>
     <span>CI-S <b>${formatScore(exam.calculusIndex)}</b></span>
     <span>OHI-S <b>${formatScore(exam.ohisScore)}</b></span>
     <span>Kategori <b>${ohisCategoryLabel[exam.ohisCategory]}</b></span>
-    <span>Gigi Sehat <b>${exam.healthyTeeth}/32</b></span>
-    <span>DMFT <b>${exam.dmftScore}</b></span>
   </p>
-
-  <h2>Odontogram</h2>
-  <table><thead><tr><th>FDI</th><th>Kondisi</th><th>Catatan</th></tr></thead>
-  <tbody>${toothRows(exam)}</tbody></table>
 
   <h2>Diagnosis &amp; Rencana Perawatan</h2>
   <table><tbody>

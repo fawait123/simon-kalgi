@@ -27,6 +27,14 @@ export interface DashboardSummaryDto {
     total: number
     thisMonth: number
     lastMonth: number
+    /** Pasien berusia 18 tahun ke atas. */
+    adult: number
+    /** Pasien dengan CI-S terakhir di atas 0. */
+    withCalculus: number
+    /** Pasien dengan tindakan scaling tercatat pada pemeriksaan final. */
+    scalingDone: number
+    /** Pasien dengan jadwal kontrol jatuh tempo dalam 7 hari atau sudah terlambat. */
+    needControl: number
   }
   workers: {
     active: number

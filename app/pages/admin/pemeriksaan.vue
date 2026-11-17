@@ -12,7 +12,6 @@ onMounted(() => {
   <div class="mx-auto flex w-full max-w-[1600px] flex-col gap-space-lg p-space-lg lg:p-space-xl">
     <ExaminationIntroCard />
     <ExaminationPatientSection />
-    <ExaminationOdontogram />
     <ExaminationOhisSection />
     <ExaminationSoftTissueSection />
     <ExaminationActionBar />

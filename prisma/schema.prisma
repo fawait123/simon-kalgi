@@ -62,14 +62,6 @@ enum MonitoringStatus {
   kritis
 }
 
-enum ToothCondition {
-  sehat
-  karies
-  tambalan
-  mahkota
-  hilang
-}
-
 enum IndexSurface {
   buccal
   labial
@@ -85,6 +77,12 @@ enum HeartRhythm {
 enum ExaminationStatus {
   draft
   final
+}
+
+enum ScalingType {
+  supragingiva
+  subgingiva
+  root_planing
 }
 
 enum NotificationCategory {
@@ -172,8 +170,6 @@ model Examination {
   calculusIndex    Float             @default(0) @map("calculus_index")
   ohisScore        Float             @default(0) @map("ohis_score")
   ohisCategory     OhisCategory      @default(baik) @map("ohis_category")
-  healthyTeeth     Int               @default(0) @map("healthy_teeth")
-  dmftScore        Int               @default(0) @map("dmft_score")
   status           ExaminationStatus @default(draft)
   nextVisitAt      DateTime?         @map("next_visit_at")
   nextVisitNote    String?           @map("next_visit_note") @db.VarChar(200)
@@ -182,28 +178,13 @@ model Examination {
 
   patient     Patient                 @relation(fields: [patientId], references: [id], onDelete: Cascade)
   examiner    HealthWorker?           @relation(fields: [examinerId], references: [id], onDelete: SetNull)
-  teeth       ExaminationTooth[]
   indexScores ExaminationIndexScore[]
+  scalingRecord ScalingRecord?
 
   @@index([patientId, examDate])
   @@index([examinerId, examDate])
   @@index([status])
   @@map("examinations")
-}
-
-model ExaminationTooth {
-  id            String         @id @default(uuid()) @db.Uuid
-  examinationId String         @map("examination_id") @db.Uuid
-  fdiNumber     Int            @map("fdi_number")
-  condition     ToothCondition @default(sehat)
-  note          String?        @db.VarChar(120)
-  createdAt     DateTime       @default(now()) @map("created_at")
-  updatedAt     DateTime       @updatedAt @map("updated_at")
-
-  examination Examination @relation(fields: [examinationId], references: [id], onDelete: Cascade)
-
-  @@unique([examinationId, fdiNumber])
-  @@map("examination_teeth")
 }
 
 model ExaminationIndexScore {
@@ -220,6 +201,26 @@ model ExaminationIndexScore {
 
   @@unique([examinationId, fdiNumber])
   @@map("examination_index_scores")
+}
+
+model ScalingRecord {
+  id            String      @id @default(uuid()) @db.Uuid
+  patientId     String      @map("patient_id") @db.Uuid
+  examinationId String?     @unique @map("examination_id") @db.Uuid
+  performedAt   DateTime    @map("performed_at") @db.Date
+  scalingType   ScalingType @map("scaling_type")
+  quadrants     String      @db.VarChar(120)
+  operatorName  String      @map("operator_name") @db.VarChar(120)
+  note          String?     @db.VarChar(300)
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+
+  patient     Patient      @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  examination Examination? @relation(fields: [examinationId], references: [id], onDelete: Cascade)
+
+  @@index([patientId, performedAt])
+  @@index([performedAt])
+  @@map("scaling_records")
 }
 
 model Patient {
@@ -240,9 +241,6 @@ model Patient {
   debrisIndex        Float?          @map("debris_index")
   calculusIndex      Float?          @map("calculus_index")
   ohisCategory       OhisCategory?   @map("ohis_category")
-  healthyTeeth       Int             @default(0) @map("healthy_teeth")
-  odontogramNote     String?         @map("odontogram_note") @db.VarChar(200)
-  dmftScore          Int?            @map("dmft_score")
   lastVisitAt        DateTime?       @map("last_visit_at") @db.Date
   nextVisitAt        DateTime?       @map("next_visit_at")
   nextVisitClinician String?         @map("next_visit_clinician") @db.VarChar(120)
@@ -272,6 +270,7 @@ model Patient {
   inboxNotifications Notification[]       @relation("PatientNotificationInbox")
   careTasks          CareTask[]
   careCompletions    CareTaskCompletion[]
+  scalingRecords     ScalingRecord[]
 
   @@index([gender])
   @@index([ohisCategory])

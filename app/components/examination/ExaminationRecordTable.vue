@@ -5,7 +5,6 @@ import {
   Printer,
   RotateCcw,
   SearchX,
-  Smile,
   SquareChartGantt,
   Trash2,
 } from 'lucide-vue-next'
@@ -28,7 +27,6 @@ const props = defineProps<{
 }>()
 
 const emits = defineEmits<{
-  odontogram: [row: ExaminationListItem]
   'view-ohis': [row: ExaminationListItem]
   print: [row: ExaminationListItem]
   remove: [row: ExaminationListItem]
@@ -60,10 +58,6 @@ function ohisBadgeClassOf(row: ExaminationListItem) {
 
 function findingOf(row: ExaminationListItem) {
   return row.hygieneDiagnosis?.trim() || row.chiefComplaint
-}
-
-function findingDetailOf(row: ExaminationListItem) {
-  return `${row.healthyTeeth} gigi sehat · DMFT ${row.dmftScore}`
 }
 
 function planOf(row: ExaminationListItem) {
@@ -107,7 +101,7 @@ function planDetailOf(row: ExaminationListItem) {
             <TableHead class="font-table-header text-table-header uppercase tracking-wider text-text-muted">Dokter Pemeriksa</TableHead>
             <TableHead class="text-center font-table-header text-table-header uppercase tracking-wider text-text-muted">Indeks DI / CI</TableHead>
             <TableHead class="text-center font-table-header text-table-header uppercase tracking-wider text-text-muted">Skor OHI-S</TableHead>
-            <TableHead class="font-table-header text-table-header uppercase tracking-wider text-text-muted">Temuan Odontogram</TableHead>
+            <TableHead class="font-table-header text-table-header uppercase tracking-wider text-text-muted">Temuan Klinis</TableHead>
             <TableHead class="font-table-header text-table-header uppercase tracking-wider text-text-muted">Rekomendasi Klinis</TableHead>
             <TableHead class="text-center font-table-header text-table-header uppercase tracking-wider text-text-muted">Status</TableHead>
             <TableHead class="w-16 text-right font-table-header text-table-header uppercase tracking-wider text-text-muted">Aksi</TableHead>
@@ -185,10 +179,7 @@ function planDetailOf(row: ExaminationListItem) {
               </TableCell>
 
               <TableCell class="min-w-[200px] align-top">
-                <div class="flex flex-col gap-0.5">
-                  <span class="font-medium text-text-primary">{{ findingOf(row) }}</span>
-                  <span class="font-caption text-caption text-text-muted">{{ findingDetailOf(row) }}</span>
-                </div>
+                <span class="font-medium text-text-primary">{{ findingOf(row) }}</span>
               </TableCell>
 
               <TableCell class="min-w-[190px] align-top">
@@ -224,13 +215,9 @@ function planDetailOf(row: ExaminationListItem) {
                     <DropdownMenuLabel class="font-table-header text-table-header uppercase tracking-wider text-text-muted">
                       Aksi Rekam {{ row.patient.medicalRecordNo }}
                     </DropdownMenuLabel>
-                    <DropdownMenuItem class="gap-2.5 rounded font-body-sm text-body-sm" @select="emits('odontogram', row)">
-                      <Smile class="size-[18px] text-primary" aria-hidden="true" />
-                      Lihat Detail Odontogram
-                    </DropdownMenuItem>
                     <DropdownMenuItem class="gap-2.5 rounded font-body-sm text-body-sm" @select="emits('view-ohis', row)">
                       <SquareChartGantt class="size-[18px] text-text-secondary" aria-hidden="true" />
-                      Lihat Hasil OHI-S &amp; Kalkulus
+                      Lihat Detail Rekam Medis
                     </DropdownMenuItem>
                     <DropdownMenuItem class="gap-2.5 rounded font-body-sm text-body-sm" @select="emits('print', row)">
                       <Printer class="size-[18px] text-text-secondary" aria-hidden="true" />

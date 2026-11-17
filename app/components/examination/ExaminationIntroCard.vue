@@ -33,8 +33,8 @@ function onHistorySelect(exam: ExaminationDetailDto) {
         </span>
       </div>
       <p class="max-w-3xl font-body-md text-body-md text-text-secondary">
-        Formulir rekam medis pemeriksaan oral terintegrasi, odontogram interaktif 32 gigi FDI, dan
-        kalkulasi otomatis indeks kalkulus (OHI-S).
+        Formulir rekam medis pemeriksaan oral terintegrasi dan kalkulasi otomatis indeks kalkulus
+        (OHI-S).
       </p>
     </div>
 

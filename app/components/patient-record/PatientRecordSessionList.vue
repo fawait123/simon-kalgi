@@ -78,7 +78,7 @@ class="rounded border px-1.5 py-0.5 font-caption text-caption font-semibold"
           </span>
           <span class="font-caption text-caption text-text-secondary">{{ item.examinerName }}</span>
           <span class="font-caption text-caption text-text-muted">
-            OHI-S {{ item.ohisScore.toFixed(2) }} · Sehat {{ item.healthyTeeth }} · DMFT {{ item.dmftScore }}
+            OHI-S {{ item.ohisScore.toFixed(2) }}
           </span>
           <span class="truncate font-body-sm text-body-sm text-text-secondary">
             {{ item.chiefComplaint }}

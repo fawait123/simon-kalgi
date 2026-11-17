@@ -76,7 +76,7 @@ function openDelete(patient: PatientDto) {
 
 function startExamination(patient: PatientDto) {
   toast('Membuka Pemeriksaan', {
-    description: `Mengalihkan ke modul odontogram & kalkulus untuk ${patient.medicalRecordNo}.`,
+    description: `Mengalihkan ke modul pemeriksaan & kalkulus untuk ${patient.medicalRecordNo}.`,
   })
   navigateTo('/admin/pemeriksaan')
 }

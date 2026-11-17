@@ -161,19 +161,19 @@ function handleClose() {
           <div
             class="flex flex-col justify-between gap-2 rounded-xl border border-border-subtle bg-bg-canvas p-space-md">
             <div class="flex items-center justify-between text-text-secondary">
-              <span class="font-label-md text-label-md font-medium">Odontogram FDI</span>
+              <span class="font-label-md text-label-md font-medium">Kunjungan Terakhir</span>
               <Smile class="size-5 text-primary" aria-hidden="true" />
             </div>
             <div class="flex flex-col gap-1">
               <span class="font-headline-md text-headline-md font-bold text-text-primary">
-                {{ patient.healthyTeeth }} Gigi Sehat
+                {{ patient.lastVisitAt ? formatShortDateId(patient.lastVisitAt) : 'Belum Ada' }}
               </span>
               <p class="font-caption text-caption text-text-muted">
-                {{ patient.odontogramNote ?? 'Belum ada catatan odontogram.' }}
+                Pemeriksaan indeks kebersihan mulut (OHI-S) dan jaringan mulut.
               </p>
             </div>
             <span class="font-label-sm text-label-sm font-semibold text-primary">
-              Status Formula DMF-T: {{ patient.dmftScore ?? '-' }}
+              {{ patient.lastVisitAt ? 'Rekam medis tercatat' : 'Menunggu kunjungan pertama' }}
             </span>
           </div>
 

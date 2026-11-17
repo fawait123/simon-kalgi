@@ -20,8 +20,8 @@ import { Clock, Zap } from 'lucide-vue-next'
         Standarisasi Rekam Medis Gigi &amp; Pemantauan Periodontal
       </h2>
       <p class="mb-6 text-xs leading-relaxed text-primary-highlight/80">
-        Platform modern untuk dokumentasi odontogram terstandar FDI World Dental Federation dan
-        komputasi otomatis indeks kebersihan gigi.
+        Platform modern untuk dokumentasi pemeriksaan terstandar dan komputasi otomatis indeks
+        kebersihan gigi.
       </p>
 
       <div class="space-y-3.5">
@@ -30,19 +30,19 @@ import { Clock, Zap } from 'lucide-vue-next'
             <div class="flex items-center gap-2.5">
               <span
                 class="flex size-8 shrink-0 items-center justify-center rounded-lg border border-primary-highlight/30 bg-primary-container/20 font-label-sm text-label-sm font-bold text-primary-highlight"
-              >FDI</span>
+              >RME</span>
               <div class="min-w-0">
-                <h3 class="text-xs font-semibold text-white">Odontogram Dewasa 32 Gigi</h3>
+                <h3 class="text-xs font-semibold text-white">Rekam Pemeriksaan Terstruktur</h3>
                 <p class="text-[11px] text-primary-highlight/70">
-                  Pemetaan karies, tumpatan komposit, &amp; missing teeth
+                  Keluhan, gingiva, mukosa, &amp; rencana perawatan
                 </p>
               </div>
             </div>
-            <span class="shrink-0 rounded-full bg-status-success/25 px-2 py-0.5 font-label-sm text-label-sm font-medium text-primary-highlight">32/32 Elemen</span>
+            <span class="shrink-0 rounded-full bg-status-success/25 px-2 py-0.5 font-label-sm text-label-sm font-medium text-primary-highlight">Final / Draf</span>
           </div>
           <p class="mt-2.5 flex items-center gap-1.5 rounded-lg bg-black/20 px-2.5 py-1.5 font-mono text-[10px] text-primary-highlight/80">
             <span class="size-2 shrink-0 rounded-full bg-primary-highlight" aria-hidden="true" />
-            Gigi 16: O (Karies Email) &bull; Gigi 36: Restorasi RK Baik
+            Diagnosis: Kalkulus sedang &bull; Scaling terjadwal
           </p>
         </div>
 

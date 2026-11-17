@@ -1,4 +1,4 @@
-import type { OhisCategory, Prisma, ToothCondition } from '@prisma/client'
+import type { OhisCategory, Prisma, ScalingType } from '@prisma/client'
 import type {
   CreateExaminationInput,
   ExaminationListQuery,
@@ -17,14 +17,12 @@ import {
   ohisBands,
   ohisCategoryOf,
   roundScore,
-  toothConditionLabel,
+  scalingTypeLabel,
 } from '~~/shared/types/examination'
 
 const INDEX_TOOTH_COUNT = 6
-const DMFT_CONDITIONS: ToothCondition[] = ['karies', 'tambalan', 'hilang']
 const MONTH_PERIOD_PATTERN = /^(\d{4})-(0[1-9]|1[0-2])$/
 
-type ConditionRow = { condition: ToothCondition }
 type ScoreRow = { debrisValue: number, calculusValue: number }
 
 function summarizeIndex(scores: readonly ScoreRow[]) {
@@ -35,39 +33,6 @@ function summarizeIndex(scores: readonly ScoreRow[]) {
   )
   const ohisScore = roundScore(debrisIndex + calculusIndex)
   return { debrisIndex, calculusIndex, ohisScore, ohisCategory: ohisCategoryOf(ohisScore) }
-}
-
-function summarizeTeeth(teeth: readonly ConditionRow[]) {
-  const healthyTeeth = teeth.filter(row => row.condition === 'sehat').length
-  const dmftScore = teeth.filter(row => DMFT_CONDITIONS.includes(row.condition)).length
-  return { healthyTeeth, dmftScore }
-}
-
-function buildOdontogramNote(teeth: readonly ConditionRow[], ohisScore: number) {
-  const counts = teeth.reduce<Record<string, number>>((acc, row) => {
-    acc[row.condition] = (acc[row.condition] ?? 0) + 1
-    return acc
-  }, {})
-  const summary = (Object.keys(counts) as ToothCondition[])
-    .filter(condition => condition !== 'sehat')
-    .map(condition => `${counts[condition]} ${toothConditionLabel[condition]}`)
-    .join(', ')
-
-  const note = summary
-    ? `${summary} · OHI-S ${ohisScore.toFixed(2)}`
-    : `Seluruh gigi sehat · OHI-S ${ohisScore.toFixed(2)}`
-
-  return note.slice(0, 200)
-}
-
-function toToothCreate(
-  teeth: readonly { fdiNumber: number, condition: ToothCondition, note?: string | null }[],
-): Prisma.ExaminationToothCreateWithoutExaminationInput[] {
-  return teeth.map(row => ({
-    fdiNumber: row.fdiNumber,
-    condition: row.condition,
-    note: row.note ?? null,
-  }))
 }
 
 function toIndexScoreCreate(
@@ -83,11 +48,36 @@ function toIndexScoreCreate(
 
 const VISIT_NOTE_LIMIT = 500
 
-/** Catatan timeline monitoring: ringkasan diagnosis dan rencana tindakan dari pemeriksaan yang difinalisasi. */
-function buildVisitNote(hygieneDiagnosis: string | null, planOfAction: string[]) {
+type ScalingSummary = { scalingType: ScalingType, quadrants: string }
+
+function buildScalingCreate(args: {
+  patientId: string
+  performedAt: Date
+  examinerName: string
+  scalingType: ScalingType
+  quadrants?: string | null
+  note?: string | null
+}): Prisma.ScalingRecordCreateWithoutExaminationInput {
+  return {
+    patient: { connect: { id: args.patientId } },
+    performedAt: args.performedAt,
+    scalingType: args.scalingType,
+    quadrants: args.quadrants?.trim() || 'Seluruh kuadran',
+    operatorName: args.examinerName,
+    note: args.note ?? null,
+  }
+}
+
+/** Catatan timeline monitoring: ringkasan diagnosis, rencana tindakan, dan scaling yang dieksekusi. */
+function buildVisitNote(
+  hygieneDiagnosis: string | null,
+  planOfAction: string[],
+  scaling: ScalingSummary | null,
+) {
   const parts = [
     hygieneDiagnosis ? `Diagnosis: ${hygieneDiagnosis}` : null,
     planOfAction.length > 0 ? `Rencana: ${planOfAction.join('; ')}` : null,
+    scaling ? `Tindakan: ${scalingTypeLabel[scaling.scalingType]} (${scaling.quadrants})` : null,
   ].filter((part): part is string => Boolean(part))
 
   return parts.length > 0 ? parts.join(' · ').slice(0, VISIT_NOTE_LIMIT) : null
@@ -102,13 +92,11 @@ async function syncPatientRecord(
     debrisIndex: number,
     calculusIndex: number,
     ohisCategory: OhisCategory,
-    healthyTeeth: number,
-    dmftScore: number,
     hygieneDiagnosis: string | null,
     planOfAction: string[],
     nextVisitAt: Date | null,
     nextVisitNote: string | null,
-    odontogramNote: string,
+    scaling: ScalingSummary | null,
   },
   client: Prisma.TransactionClient,
 ) {
@@ -119,9 +107,6 @@ async function syncPatientRecord(
       debrisIndex: examination.debrisIndex,
       calculusIndex: examination.calculusIndex,
       ohisCategory: examination.ohisCategory,
-      healthyTeeth: examination.healthyTeeth,
-      dmftScore: examination.dmftScore,
-      odontogramNote: examination.odontogramNote,
       lastVisitAt: examination.examDate,
       nextVisitAt: examination.nextVisitAt,
       nextVisitClinician: examination.nextVisitAt ? examination.examinerName : null,
@@ -136,10 +121,10 @@ async function syncPatientRecord(
     {
       patient: { connect: { id: examination.patientId } },
       visitDate: examination.examDate,
-      title: 'Pemeriksaan Gigi & Mulut',
+      title: examination.scaling ? 'Pemeriksaan & Scaling Gigi' : 'Pemeriksaan Gigi & Mulut',
       clinicianName: examination.examinerName,
       ohisScore: examination.ohisScore,
-      note: buildVisitNote(examination.hygieneDiagnosis, examination.planOfAction),
+      note: buildVisitNote(examination.hygieneDiagnosis, examination.planOfAction, examination.scaling),
     },
     client,
   )
@@ -239,8 +224,6 @@ async function resyncPatientSummary(patientId: string, client: Prisma.Transactio
         debrisIndex: null,
         calculusIndex: null,
         ohisCategory: null,
-        dmftScore: null,
-        odontogramNote: null,
         lastVisitAt: null,
         nextVisitAt: null,
         nextVisitClinician: null,
@@ -260,9 +243,6 @@ async function resyncPatientSummary(patientId: string, client: Prisma.Transactio
       debrisIndex: latest.debrisIndex,
       calculusIndex: latest.calculusIndex,
       ohisCategory: latest.ohisCategory,
-      healthyTeeth: latest.healthyTeeth,
-      dmftScore: latest.dmftScore,
-      odontogramNote: buildOdontogramNote(latest.teeth, latest.ohisScore),
       lastVisitAt: latest.examDate,
       nextVisitAt: latest.nextVisitAt,
       nextVisitClinician: latest.nextVisitAt ? latest.examinerName : null,
@@ -331,7 +311,16 @@ export const examinationService = {
 
   async create(input: CreateExaminationInput) {
     const indexSummary = summarizeIndex(input.indexScores)
-    const toothSummary = summarizeTeeth(input.teeth)
+    const scalingCreate = input.scalingPerformed && input.scalingType
+      ? buildScalingCreate({
+          patientId: input.patientId,
+          performedAt: input.examDate,
+          examinerName: input.examinerName,
+          scalingType: input.scalingType,
+          quadrants: input.scalingQuadrants,
+          note: input.scalingNote,
+        })
+      : null
     const data: Prisma.ExaminationCreateInput = {
       patient: { connect: { id: input.patientId } },
       ...(input.examinerId ? { examiner: { connect: { id: input.examinerId } } } : {}),
@@ -351,9 +340,8 @@ export const examinationService = {
       nextVisitAt: input.nextVisitAt ?? null,
       nextVisitNote: input.nextVisitNote ?? null,
       ...indexSummary,
-      ...toothSummary,
-      teeth: { create: toToothCreate(input.teeth) },
       indexScores: { create: toIndexScoreCreate(input.indexScores) },
+      ...(scalingCreate ? { scalingRecord: { create: scalingCreate } } : {}),
     }
 
     return examinationRepository.transaction(async (client) => {
@@ -364,7 +352,12 @@ export const examinationService = {
             ...created,
             nextVisitAt: created.nextVisitAt ?? null,
             nextVisitNote: created.nextVisitNote ?? null,
-            odontogramNote: buildOdontogramNote(input.teeth, created.ohisScore),
+            scaling: created.scalingRecord
+              ? {
+                  scalingType: created.scalingRecord.scalingType,
+                  quadrants: created.scalingRecord.quadrants,
+                }
+              : null,
           },
           client,
         )
@@ -378,11 +371,6 @@ export const examinationService = {
     if (!existing)
       return null
 
-    const teeth = input.teeth ?? existing.teeth.map(row => ({
-      fdiNumber: row.fdiNumber,
-      condition: row.condition,
-      note: row.note,
-    }))
     const indexScores = input.indexScores ?? existing.indexScores.map(row => ({
       fdiNumber: row.fdiNumber,
       surface: row.surface,
@@ -391,10 +379,45 @@ export const examinationService = {
     }))
 
     const indexSummary = summarizeIndex(indexScores)
-    const toothSummary = summarizeTeeth(teeth)
     const nextVisitAt = input.nextVisitAt === undefined ? existing.nextVisitAt : input.nextVisitAt
     const nextVisitNote
       = input.nextVisitNote === undefined ? existing.nextVisitNote : input.nextVisitNote
+
+    const examDate = input.examDate ?? existing.examDate
+    const examinerName = input.examinerName ?? existing.examinerName
+    const scalingPerformed = input.scalingPerformed ?? Boolean(existing.scalingRecord)
+    const scalingType = input.scalingType ?? existing.scalingRecord?.scalingType
+    const scalingQuadrants
+      = input.scalingQuadrants ?? existing.scalingRecord?.quadrants ?? 'Seluruh kuadran'
+    const scalingNote
+      = input.scalingNote !== undefined ? input.scalingNote : existing.scalingRecord?.note ?? null
+
+    let scalingNested: Prisma.ScalingRecordUpdateOneWithoutExaminationNestedInput | undefined
+    if (!scalingPerformed) {
+      scalingNested = existing.scalingRecord ? { delete: true } : undefined
+    }
+    else if (scalingType) {
+      scalingNested = existing.scalingRecord
+        ? {
+            update: {
+              performedAt: examDate,
+              scalingType,
+              quadrants: scalingQuadrants,
+              operatorName: examinerName,
+              note: scalingNote,
+            },
+          }
+        : {
+            create: buildScalingCreate({
+              patientId: existing.patientId,
+              performedAt: examDate,
+              examinerName,
+              scalingType,
+              quadrants: scalingQuadrants,
+              note: scalingNote,
+            }),
+          }
+    }
 
     const data: Prisma.ExaminationUpdateInput = {
       ...(input.examinerId === undefined
@@ -416,9 +439,8 @@ export const examinationService = {
       nextVisitAt: nextVisitAt ?? null,
       nextVisitNote: nextVisitNote ?? null,
       ...indexSummary,
-      ...toothSummary,
-      teeth: { deleteMany: {}, create: toToothCreate(teeth) },
       indexScores: { deleteMany: {}, create: toIndexScoreCreate(indexScores) },
+      ...(scalingNested ? { scalingRecord: scalingNested } : {}),
     }
 
     return examinationRepository.transaction(async (client) => {
@@ -429,7 +451,12 @@ export const examinationService = {
             ...updated,
             nextVisitAt: nextVisitAt ?? null,
             nextVisitNote: nextVisitNote ?? null,
-            odontogramNote: buildOdontogramNote(teeth, updated.ohisScore),
+            scaling: updated.scalingRecord
+              ? {
+                  scalingType: updated.scalingRecord.scalingType,
+                  quadrants: updated.scalingRecord.quadrants,
+                }
+              : null,
           },
           client,
         )
