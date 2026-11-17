@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 enum HealthWorkerRole {
@@ -176,9 +177,9 @@ model Examination {
   createdAt        DateTime          @default(now()) @map("created_at")
   updatedAt        DateTime          @updatedAt @map("updated_at")
 
-  patient     Patient                 @relation(fields: [patientId], references: [id], onDelete: Cascade)
-  examiner    HealthWorker?           @relation(fields: [examinerId], references: [id], onDelete: SetNull)
-  indexScores ExaminationIndexScore[]
+  patient       Patient                 @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  examiner      HealthWorker?           @relation(fields: [examinerId], references: [id], onDelete: SetNull)
+  indexScores   ExaminationIndexScore[]
   scalingRecord ScalingRecord?
 
   @@index([patientId, examDate])
@@ -224,44 +225,44 @@ model ScalingRecord {
 }
 
 model Patient {
-  id                 String          @id @default(uuid()) @db.Uuid
-  medicalRecordNo    String          @unique @map("medical_record_no") @db.VarChar(15)
-  nik                String          @unique @db.Char(16)
-  fullName           String          @map("full_name") @db.VarChar(120)
-  birthDate          DateTime        @map("birth_date") @db.Date
-  gender             Gender
-  bloodType          BloodType?      @map("blood_type")
-  phone              String          @db.VarChar(20)
-  email              String?         @unique @db.VarChar(120)
-  address            String          @db.VarChar(255)
-  allergyAntibiotics Boolean         @default(false) @map("allergy_antibiotics")
-  hypertension       Boolean         @default(false)
-  diabetes           Boolean         @default(false)
-  ohisScore          Float?          @map("ohis_score")
-  debrisIndex        Float?          @map("debris_index")
-  calculusIndex      Float?          @map("calculus_index")
-  ohisCategory       OhisCategory?   @map("ohis_category")
-  lastVisitAt        DateTime?       @map("last_visit_at") @db.Date
-  nextVisitAt        DateTime?       @map("next_visit_at")
-  nextVisitClinician String?         @map("next_visit_clinician") @db.VarChar(120)
-  controlTitle       String?         @map("control_title") @db.VarChar(80)
-  controlNote        String?         @map("control_note") @db.VarChar(120)
-  controlPriority    ControlPriority @default(normal) @map("control_priority")
-  birthPlace         String?         @map("birth_place") @db.VarChar(120)
-  occupation         String?         @db.VarChar(120)
-  avatarUrl          String?         @map("avatar_url")
-  emergencyName      String?         @map("emergency_name") @db.VarChar(120)
-  emergencyRelation  String?         @map("emergency_relation") @db.VarChar(60)
-  emergencyPhone     String?         @map("emergency_phone") @db.VarChar(20)
-  emergencyEmail     String?         @map("emergency_email") @db.VarChar(120)
-  emergencyAddress   String?         @map("emergency_address") @db.VarChar(255)
-  insuranceType      String?         @map("insurance_type") @db.VarChar(60)
-  insurancePolicyNo  String?         @map("insurance_policy_no") @db.VarChar(40)
-  insuranceClass     String?         @map("insurance_class") @db.VarChar(30)
-  insuranceValidUntil DateTime?      @map("insurance_valid_until") @db.Date
-  passwordHash       String?         @map("password_hash")
-  createdAt          DateTime        @default(now()) @map("created_at")
-  updatedAt          DateTime        @updatedAt @map("updated_at")
+  id                  String          @id @default(uuid()) @db.Uuid
+  medicalRecordNo     String          @unique @map("medical_record_no") @db.VarChar(15)
+  nik                 String          @unique @db.Char(16)
+  fullName            String          @map("full_name") @db.VarChar(120)
+  birthDate           DateTime        @map("birth_date") @db.Date
+  gender              Gender
+  bloodType           BloodType?      @map("blood_type")
+  phone               String          @db.VarChar(20)
+  email               String?         @unique @db.VarChar(120)
+  address             String          @db.VarChar(255)
+  allergyAntibiotics  Boolean         @default(false) @map("allergy_antibiotics")
+  hypertension        Boolean         @default(false)
+  diabetes            Boolean         @default(false)
+  ohisScore           Float?          @map("ohis_score")
+  debrisIndex         Float?          @map("debris_index")
+  calculusIndex       Float?          @map("calculus_index")
+  ohisCategory        OhisCategory?   @map("ohis_category")
+  lastVisitAt         DateTime?       @map("last_visit_at") @db.Date
+  nextVisitAt         DateTime?       @map("next_visit_at")
+  nextVisitClinician  String?         @map("next_visit_clinician") @db.VarChar(120)
+  controlTitle        String?         @map("control_title") @db.VarChar(80)
+  controlNote         String?         @map("control_note") @db.VarChar(120)
+  controlPriority     ControlPriority @default(normal) @map("control_priority")
+  birthPlace          String?         @map("birth_place") @db.VarChar(120)
+  occupation          String?         @db.VarChar(120)
+  avatarUrl           String?         @map("avatar_url")
+  emergencyName       String?         @map("emergency_name") @db.VarChar(120)
+  emergencyRelation   String?         @map("emergency_relation") @db.VarChar(60)
+  emergencyPhone      String?         @map("emergency_phone") @db.VarChar(20)
+  emergencyEmail      String?         @map("emergency_email") @db.VarChar(120)
+  emergencyAddress    String?         @map("emergency_address") @db.VarChar(255)
+  insuranceType       String?         @map("insurance_type") @db.VarChar(60)
+  insurancePolicyNo   String?         @map("insurance_policy_no") @db.VarChar(40)
+  insuranceClass      String?         @map("insurance_class") @db.VarChar(30)
+  insuranceValidUntil DateTime?       @map("insurance_valid_until") @db.Date
+  passwordHash        String?         @map("password_hash")
+  createdAt           DateTime        @default(now()) @map("created_at")
+  updatedAt           DateTime        @updatedAt @map("updated_at")
 
   visits             PatientVisit[]
   examinations       Examination[]
