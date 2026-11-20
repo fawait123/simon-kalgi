@@ -231,7 +231,7 @@ function openDelete(task: CareTaskStaffDto) {
                 <span class="font-headline-sm text-headline-sm text-text-primary">Belum ada tugas tambahan</span>
                 <p class="max-w-md font-body-md text-body-md text-text-secondary">
                   Checklist pasien sudah memuat tiga sesi harian bawaan (pagi, siang, malam) yang tampil otomatis saat
-                  pasien pertama membuka checklist. Tambahkan tugas khusus di luar itu bila perlu.
+                  pasien pertama kali membuka checklist. Tambahkan tugas khusus di luar itu bila perlu.
                 </p>
                 <Button type="button" variant="outline" class="gap-2 rounded-lg" @click="openCreate">
                   <Plus class="size-4" aria-hidden="true" />
