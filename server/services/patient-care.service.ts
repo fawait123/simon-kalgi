@@ -19,6 +19,7 @@ import {
   STREAK_BONUS_DAYS,
 } from '~~/shared/types/care'
 import { patientCareRepository } from '~~/server/repositories/patient-care.repository'
+import { careTaskRepository } from '~~/server/repositories/care-task.repository'
 import { createApiError } from '~~/server/utils/errors'
 
 /**
@@ -191,6 +192,9 @@ export const patientCareService = {
     const today = wibKeyOf(now)
     // Jendela 34 hari menutup heatmap 28 hari, minggu berjalan, dan minggu sebelumnya sekali jalan.
     const windowStart = dayOffsetKey(today, -(CARE_HEAT_WINDOW_DAYS + 6))
+
+    // Pasien baru belum punya baris builtin sampai pertama kali membuka halaman ini.
+    await careTaskRepository.ensureBuiltinTasks(patientId)
 
     const [patient, tasks, completions] = await Promise.all([
       patientCareRepository.findPortalPatient(patientId),
