@@ -39,19 +39,18 @@ export const careTaskRepository = {
    * Lazy-create sesi bawaan yang belum ada untuk pasien ini. Idempoten; race dua
    * request pertama sengaja ditoleransi (duplikat ringan, tanpa unique constraint baru).
    */
-  ensureBuiltinTasks: (patientId: string) =>
-    prisma.$transaction(async (tx) => {
-      const existing = await tx.careTask.findMany({
-        where: { patientId, isBuiltin: true },
-        select: { session: true },
-      })
-      const done = new Set(existing.map(row => row.session))
-      const missing = careTaskBuiltinTemplates.filter(template => !done.has(template.session))
-      if (missing.length === 0) return
-      await tx.careTask.createMany({
-        data: missing.map(template => ({ ...template, patientId, isBuiltin: true })),
-      })
-    }),
+  ensureBuiltinTasks: async (patientId: string) => {
+    const existing = await prisma.careTask.findMany({
+      where: { patientId, isBuiltin: true },
+      select: { session: true },
+    })
+    const done = new Set(existing.map(row => row.session))
+    const missing = careTaskBuiltinTemplates.filter(template => !done.has(template.session))
+    if (missing.length === 0) return
+    await prisma.careTask.createMany({
+      data: missing.map(template => ({ ...template, patientId, isBuiltin: true })),
+    })
+  },
 
   create: (data: CareTaskFields & { patientId: string }) =>
     prisma.careTask.create({ data, select: careTaskAdminSelect }),
@@ -67,10 +66,10 @@ export const careTaskRepository = {
    */
   deleteIfNoCompletions: (id: string) =>
     prisma.$transaction(async (tx) => {
-      const deleted = await tx.careTask.deleteMany({
+      const deleteResult = await tx.careTask.deleteMany({
         where: { id, isBuiltin: false, completions: { none: {} } },
       })
-      if (deleted.count > 0) return { deleted: true as const }
+      if (deleteResult.count > 0) return { deleted: true as const }
 
       const task = await tx.careTask.findUnique({
         where: { id },
