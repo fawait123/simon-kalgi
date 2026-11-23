@@ -202,6 +202,14 @@ function resetFilters() {
       :is-error="detailQuery.isError.value" :is-sending-reminder="reminderMutation.isPending.value"
       @schedule="scheduleFromDetail" @remind="remindFromDetail" @retry="() => detailQuery.refetch()" />
 
+    <CareTaskManager
+      v-if="detail"
+      :key="detail.patientId"
+      :patient-id="detail.patientId"
+      :patient-name="detail.fullName"
+      :medical-record-no="detail.medicalRecordNo"
+    />
+
     <MonitoringScheduleForm />
   </section>
 </template>
