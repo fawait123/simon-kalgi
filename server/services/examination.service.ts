@@ -11,7 +11,9 @@ import type {
 } from '~~/shared/types/examination'
 import type { ExaminationListRecord } from '~~/server/repositories/examination.repository'
 import { examinationRepository } from '~~/server/repositories/examination.repository'
+import { monitoringRepository } from '~~/server/repositories/monitoring.repository'
 import { createApiError } from '~~/server/utils/errors'
+import { DEFAULT_MONITORING_PROGRAM } from '~~/shared/types/monitoring'
 import {
   deriveRecordStatus,
   ohisBands,
@@ -47,8 +49,20 @@ function toIndexScoreCreate(
 }
 
 const VISIT_NOTE_LIMIT = 500
+const KONTROL_UTC_HOUR = 2 // 09:00 WIB, rekam medis hanya menyimpan tanggal kontrol
 
 type ScalingSummary = { scalingType: ScalingType, quadrants: string }
+
+function monitoringScheduleOf(nextVisitAt: Date | null) {
+  if (!nextVisitAt)
+    return null
+  return new Date(Date.UTC(
+    nextVisitAt.getUTCFullYear(),
+    nextVisitAt.getUTCMonth(),
+    nextVisitAt.getUTCDate(),
+    KONTROL_UTC_HOUR,
+  ))
+}
 
 function buildScalingCreate(args: {
   patientId: string
@@ -125,6 +139,19 @@ async function syncPatientRecord(
       clinicianName: examination.examinerName,
       ohisScore: examination.ohisScore,
       note: buildVisitNote(examination.hygieneDiagnosis, examination.planOfAction, examination.scaling),
+    },
+    client,
+  )
+
+  await monitoringRepository.ensureEnrollment(
+    {
+      patientId: examination.patientId,
+      programName: DEFAULT_MONITORING_PROGRAM,
+      baselineOhisScore: examination.ohisScore,
+      baselineDebrisIndex: examination.debrisIndex,
+      baselineCalculusIndex: examination.calculusIndex,
+      scheduledVisitAt: monitoringScheduleOf(examination.nextVisitAt),
+      scheduledVisitNote: examination.nextVisitAt ? 'Kontrol hasil pemeriksaan' : null,
     },
     client,
   )

@@ -15,7 +15,13 @@ import type {
   MonitoringTrendDto,
   MonitoringTrendPointDto,
 } from '~~/shared/types/monitoring'
-import { ageFrom, patientInitials, percentChangeFrom } from '~~/shared/types/monitoring'
+import {
+  ageFrom,
+  DEFAULT_MONITORING_PROGRAM,
+  patientInitials,
+  percentChangeFrom,
+} from '~~/shared/types/monitoring'
+import { carePercentOf } from '~~/shared/types/care'
 import type {
   MonitoringDetailRecord,
   MonitoringListRow,
@@ -25,7 +31,6 @@ import { monitoringRepository } from '~~/server/repositories/monitoring.reposito
 import { notificationService } from '~~/server/services/notification.service'
 import { createApiError } from '~~/server/utils/errors'
 
-const DEFAULT_PROGRAM = 'Program Pemantauan Kesehatan Gigi & Mulut'
 const DAY_MS = 86_400_000
 
 export interface MonitoringActor {
@@ -60,6 +65,55 @@ function dayDiff(from: Date, to: Date) {
   const start = Date.UTC(from.getUTCFullYear(), from.getUTCMonth(), from.getUTCDate())
   const end = Date.UTC(to.getUTCFullYear(), to.getUTCMonth(), to.getUTCDate())
   return Math.round((end - start) / DAY_MS)
+}
+
+const WIB_OFFSET_MINUTES = 420
+
+function wibKeyOf(instant: Date) {
+  return new Date(instant.getTime() + WIB_OFFSET_MINUTES * 60_000).toISOString().slice(0, 10)
+}
+
+function dateOfKey(key: string) {
+  return new Date(`${key}T00:00:00.000Z`)
+}
+
+/** Senin sebagai awal minggu, sama dengan strip Sen-Min di portal pasien. */
+function weekStartKeyOf(key: string) {
+  const date = dateOfKey(key)
+  date.setUTCDate(date.getUTCDate() - ((date.getUTCDay() + 6) % 7))
+  return date.toISOString().slice(0, 10)
+}
+
+function daysElapsedInWeek(key: string) {
+  return ((dateOfKey(key).getUTCDay() + 6) % 7) + 1
+}
+
+/**
+ * Kepatuhan checklist hygiene = tugas selesai Senin–hari ini / (jumlah tugas × hari berjalan).
+ * Dihitung saat baca karena kolom `checklist_percent` tidak pernah disinkronkan dari completions.
+ */
+async function checklistPercentByPatient(patientIds: string[], now: Date) {
+  const percents = new Map<string, number>()
+  if (patientIds.length === 0) return percents
+  const todayKey = wibKeyOf(now)
+  const [taskCounts, doneCounts] = await Promise.all([
+    monitoringRepository.findChecklistTaskCounts(patientIds),
+    monitoringRepository.findChecklistCompletionCounts(
+      patientIds,
+      dateOfKey(weekStartKeyOf(todayKey)),
+      dateOfKey(todayKey),
+    ),
+  ])
+  const tasksByPatient = new Map(taskCounts.map(row => [row.patientId, row._count._all]))
+  const doneByPatient = new Map(doneCounts.map(row => [row.patientId, row._count._all]))
+  const days = daysElapsedInWeek(todayKey)
+  for (const patientId of patientIds) {
+    percents.set(
+      patientId,
+      carePercentOf(doneByPatient.get(patientId) ?? 0, (tasksByPatient.get(patientId) ?? 0) * days),
+    )
+  }
+  return percents
 }
 
 function buildScheduleHint(scheduledVisitAt: Date | null, now: Date) {
@@ -118,6 +172,7 @@ function buildWhere(query: MonitoringListQuery): Prisma.PatientMonitoringWhereIn
 function mapRow(
   row: MonitoringListRow,
   latestVisit: MonitoringVisit | undefined,
+  checklistPercent: number,
   now: Date,
 ): MonitoringRowDto {
   const baseline = row.baselineOhisScore
@@ -134,7 +189,7 @@ function mapRow(
     phone: row.patient.phone,
     programName: row.programName,
     status: row.status,
-    checklistPercent: row.checklistPercent,
+    checklistPercent,
     lastVisitAt: isoOf(latestVisit?.visitDate ?? row.patient.lastVisitAt ?? null),
     lastClinician: latestVisit?.clinicianName ?? row.patient.nextVisitClinician ?? null,
     baselineOhisScore: baseline,
@@ -218,8 +273,15 @@ export const monitoringService = {
         latestByPatient.set(visit.patientId, visit)
     }
 
+    const checklistPercents = await checklistPercentByPatient(items.map(item => item.patientId), now)
+
     return {
-      data: items.map(item => mapRow(item, latestByPatient.get(item.patientId), now)),
+      data: items.map(item => mapRow(
+        item,
+        latestByPatient.get(item.patientId),
+        checklistPercents.get(item.patientId) ?? 0,
+        now,
+      )),
       meta: { page: query.page, pageSize: query.pageSize, total },
     }
   },
@@ -243,7 +305,14 @@ export const monitoringService = {
       { key: 'critical', label: 'Kritis / Tidak Hadir', count: critical, percent: percentOf(critical) },
     ]
 
-    const checklistSum = snapshot.reduce((sum, row) => sum + row.checklistPercent, 0)
+    const checklistPercents = await checklistPercentByPatient(
+      snapshot.map(row => row.patientId),
+      new Date(),
+    )
+    const checklistSum = snapshot.reduce(
+      (sum, row) => sum + (checklistPercents.get(row.patientId) ?? 0),
+      0,
+    )
     const complianceRate = total === 0 ? 0 : round1(checklistSum / total)
 
     const paired = snapshot.filter(
@@ -294,6 +363,11 @@ export const monitoringService = {
         })),
     )
 
+    const checklistPercents = await checklistPercentByPatient(
+      snapshot.map(row => row.patientId),
+      new Date(),
+    )
+
     return {
       range,
       points,
@@ -306,7 +380,12 @@ export const monitoringService = {
         ),
         checklistCompliance: snapshot.length === 0
           ? 0
-          : Math.round(snapshot.reduce((sum, row) => sum + row.checklistPercent, 0) / snapshot.length),
+          : Math.round(
+              snapshot.reduce(
+                (sum, row) => sum + (checklistPercents.get(row.patientId) ?? 0),
+                0,
+              ) / snapshot.length,
+            ),
       },
     }
   },
@@ -319,6 +398,7 @@ export const monitoringService = {
 
     const patient = record.patient
     const latestVisit = patient.visits[0]
+    const checklistPercents = await checklistPercentByPatient([patientId], new Date())
 
     return {
       patientId: record.patientId,
@@ -327,7 +407,7 @@ export const monitoringService = {
       initials: patientInitials(patient.fullName),
       programName: record.programName,
       status: record.status,
-      checklistPercent: record.checklistPercent,
+      checklistPercent: checklistPercents.get(patientId) ?? 0,
       dpjp: patient.nextVisitClinician ?? latestVisit?.clinicianName ?? record.validatedByClinician ?? null,
       doctorNote: record.doctorNote,
       validatedByClinician: record.validatedByClinician,
@@ -374,7 +454,7 @@ export const monitoringService = {
       create: {
         ...scheduleFields,
         patientId: patient.id,
-        programName: patient.monitoring?.programName ?? DEFAULT_PROGRAM,
+        programName: patient.monitoring?.programName ?? DEFAULT_MONITORING_PROGRAM,
         checklistPercent: 0,
         baselineOhisScore: patient.ohisScore,
         baselineDebrisIndex: patient.debrisIndex,

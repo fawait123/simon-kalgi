@@ -296,7 +296,7 @@ export function createExaminationDraft() {
     autosaveEnabled.value = false
     examinationId.value = exam.id
     status.value = exam.status
-    examDate.value = toDateInputValue(exam.examDate)
+    // examDate.value = toDateInputValue(exam.examDate)
     chiefComplaint.value = exam.chiefComplaint
     bloodPressure.value = exam.bloodPressure ?? ''
     heartRate.value = exam.heartRate === null ? '' : String(exam.heartRate)

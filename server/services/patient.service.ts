@@ -5,6 +5,7 @@ import type {
   UpdatePatientInput,
 } from '~~/shared/schemas/patient.schema'
 import { patientRepository } from '~~/server/repositories/patient.repository'
+import { hashSync } from 'bcryptjs'
 
 const RECORD_PREFIX = 'RM-2025-'
 
@@ -60,6 +61,7 @@ export const patientService = {
   },
 
   create(input: CreatePatientInput) {
+    const passwordHash = hashSync(DEFAULT_PORTAL_PASSWORD, 10)
     const data: Omit<Prisma.PatientCreateInput, 'medicalRecordNo'> = {
       fullName: input.fullName,
       nik: input.nik,
@@ -72,6 +74,7 @@ export const patientService = {
       diabetes: input.diabetes,
       ...(input.bloodType ? { bloodType: input.bloodType } : {}),
       ...(input.email ? { email: input.email } : {}),
+      passwordHash
     }
 
     return patientRepository.transaction(async (client) => {

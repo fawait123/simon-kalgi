@@ -93,4 +93,4 @@ export const bloodTypeLabel: Record<BloodType, string> = {
   O: 'O',
 }
 
-export const DEFAULT_PORTAL_PASSWORD = 'DentaCare#2025'
+export const DEFAULT_PORTAL_PASSWORD = 'DentaCare2024!'

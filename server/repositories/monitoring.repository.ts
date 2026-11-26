@@ -118,8 +118,8 @@ export const monitoringRepository = {
   findSnapshot() {
     return prisma.patientMonitoring.findMany({
       select: {
+        patientId: true,
         status: true,
-        checklistPercent: true,
         baselineOhisScore: true,
         baselineDebrisIndex: true,
         baselineCalculusIndex: true,
@@ -141,6 +141,30 @@ export const monitoringRepository = {
     })
   },
 
+  /** Jumlah tugas checklist hygiene per pasien, dasar penyebut persentase kepatuhan. */
+  findChecklistTaskCounts(patientIds: string[]) {
+    if (patientIds.length === 0) {
+      return Promise.resolve([] as { patientId: string, _count: { _all: number } }[])
+    }
+    return prisma.careTask.groupBy({
+      by: ['patientId'],
+      where: { patientId: { in: patientIds } },
+      _count: { _all: true },
+    })
+  },
+
+  /** Tugas yang sudah dicentang per pasien dalam rentang tanggal WIB (kolom `@db.Date`). */
+  findChecklistCompletionCounts(patientIds: string[], from: Date, to: Date) {
+    if (patientIds.length === 0) {
+      return Promise.resolve([] as { patientId: string, _count: { _all: number } }[])
+    }
+    return prisma.careTaskCompletion.groupBy({
+      by: ['patientId'],
+      where: { patientId: { in: patientIds }, logDate: { gte: from, lte: to } },
+      _count: { _all: true },
+    })
+  },
+
   findPatientBase(patientId: string) {
     return prisma.patient.findUnique({
       where: { id: patientId },
@@ -153,6 +177,36 @@ export const monitoringRepository = {
         calculusIndex: true,
         monitoring: { select: { status: true, programName: true } },
       },
+    })
+  },
+
+  /** Daftarkan pasien ke program pemantauan bila belum ada; baris lama tidak ditimpa. */
+  ensureEnrollment(
+    args: {
+      patientId: string
+      programName: string
+      baselineOhisScore: number | null
+      baselineDebrisIndex: number | null
+      baselineCalculusIndex: number | null
+      scheduledVisitAt: Date | null
+      scheduledVisitNote: string | null
+    },
+    client: Prisma.TransactionClient,
+  ) {
+    return client.patientMonitoring.upsert({
+      where: { patientId: args.patientId },
+      update: {},
+      create: {
+        patientId: args.patientId,
+        programName: args.programName,
+        status: 'perlu_perhatian',
+        baselineOhisScore: args.baselineOhisScore,
+        baselineDebrisIndex: args.baselineDebrisIndex,
+        baselineCalculusIndex: args.baselineCalculusIndex,
+        scheduledVisitAt: args.scheduledVisitAt,
+        scheduledVisitNote: args.scheduledVisitNote,
+      },
+      select: { id: true },
     })
   },
 
