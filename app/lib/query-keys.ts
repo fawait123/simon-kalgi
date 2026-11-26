@@ -100,6 +100,15 @@ export const educationKeys = {
   stats: () => [...educationKeys.all, 'stats'] as const,
 }
 
+// Root terpisah dari patientCareKeys: CRUD staf tidak boleh memicu refetch checklist portal pasien.
+export const careTaskKeys = {
+  all: ['care-tasks'] as const,
+  lists: () => [...careTaskKeys.all, 'list'] as const,
+  list: (patientId: string) => [...careTaskKeys.lists(), patientId] as const,
+  details: () => [...careTaskKeys.all, 'detail'] as const,
+  detail: (taskId: string) => [...careTaskKeys.details(), taskId] as const,
+}
+
 // Root-nya sengaja tidak dinest di bawah educationKeys: invalidasi CRUD admin tidak boleh
 // menarik ulang feed edukasi yang dibaca pasien.
 export const patientEducationKeys = {

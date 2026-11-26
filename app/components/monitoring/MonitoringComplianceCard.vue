@@ -4,7 +4,7 @@ import type { MonitoringStatusFilter } from '~~/shared/schemas/monitoring.schema
 import type { MonitoringDistributionDto } from '~~/shared/types/monitoring'
 import { ChartContainer } from '~/components/ui/chart'
 import { VisDonut, VisDonutSelectors, VisSingleContainer } from '@unovis/vue'
-import { CircleAlert, Send, ShieldAlert } from 'lucide-vue-next'
+import { CircleAlert } from 'lucide-vue-next'
 
 const props = defineProps<{
   distribution?: MonitoringDistributionDto[] | null
@@ -137,19 +137,9 @@ function isActive(key: MonitoringDistributionDto['key']) {
       <div class="relative mx-auto h-[178px] w-[178px]">
         <ClientOnly>
           <ChartContainer :config="chartConfig" class="h-full w-full">
-            <VisSingleContainer
-              :data="donutData"
-              :height="178"
-              :margin="{ top: 4, right: 4, bottom: 4, left: 4 }"
-            >
-              <VisDonut
-                :value="valueOf"
-                :color="colorOf"
-                :arc-width="20"
-                :pad-angle="0.012"
-                :corner-radius="3"
-                :events="segmentEvents"
-              />
+            <VisSingleContainer :data="donutData" :height="178" :margin="{ top: 4, right: 4, bottom: 4, left: 4 }">
+              <VisDonut :value="valueOf" :color="colorOf" :arc-width="20" :pad-angle="0.012" :corner-radius="3"
+                :events="segmentEvents" />
             </VisSingleContainer>
           </ChartContainer>
           <template #fallback>
@@ -164,30 +154,23 @@ function isActive(key: MonitoringDistributionDto['key']) {
 
       <p class="sr-only">
         Distribusi kepatuhan kontrol:
-        <span v-for="segment in donutData" :key="`sr-${segment.key}`">{{ segment.label }} {{ segment.count }} pasien ({{ segment.percent }}%). </span>
+        <span v-for="segment in donutData" :key="`sr-${segment.key}`">{{ segment.label }} {{ segment.count }} pasien ({{
+          segment.percent }}%). </span>
       </p>
 
       <ul class="flex flex-col gap-1.5">
         <li v-for="segment in donutData" :key="`legend-${segment.key}`">
-          <component
-            :is="segment.clickable ? 'button' : 'div'"
-            :type="segment.clickable ? 'button' : undefined"
+          <component :is="segment.clickable ? 'button' : 'div'" :type="segment.clickable ? 'button' : undefined"
             :aria-pressed="segment.clickable ? isActive(segment.key) : undefined"
             class="flex w-full items-center justify-between gap-2 rounded-lg bg-bg-canvas px-3 py-2 text-left transition-colors"
             :class="segment.clickable ? 'cursor-pointer hover:bg-surface-container-low' : 'cursor-default'"
-            @click="segment.clickable && selectStatus(segment.key)"
-            @mouseenter="activeKey = segment.key"
-            @mouseleave="activeKey = null"
-            @focusin="activeKey = segment.key"
-            @focusout="activeKey = null"
-          >
+            @click="segment.clickable && selectStatus(segment.key)" @mouseenter="activeKey = segment.key"
+            @mouseleave="activeKey = null" @focusin="activeKey = segment.key" @focusout="activeKey = null">
             <span class="flex items-center gap-2 font-body-sm text-body-sm text-text-secondary">
               <span class="size-2.5 rounded-full" :class="legendDotClass[segment.key]" aria-hidden="true" />
               {{ segment.label }}
-              <span
-                v-if="isActive(segment.key)"
-                class="rounded bg-primary/10 px-1.5 py-0.5 font-caption text-caption font-semibold text-primary"
-              >
+              <span v-if="isActive(segment.key)"
+                class="rounded bg-primary/10 px-1.5 py-0.5 font-caption text-caption font-semibold text-primary">
                 Filter aktif
               </span>
             </span>
@@ -202,33 +185,9 @@ function isActive(key: MonitoringDistributionDto['key']) {
       </ul>
 
       <p class="font-caption text-caption text-text-muted">
-        Arahkan kursor ke diagram untuk membaca tiap segmen. Klik segmen Terlambat atau Kritis untuk memfilter tabel pasien.
+        Arahkan kursor ke diagram untuk membaca tiap segmen. Klik segmen Terlambat atau Kritis untuk memfilter tabel
+        pasien.
       </p>
-
-      <div class="mt-auto flex flex-col gap-2 rounded-lg bg-status-danger-bg p-3">
-        <div class="flex items-start gap-2">
-          <ShieldAlert class="mt-0.5 size-[18px] shrink-0 text-status-danger" aria-hidden="true" />
-          <div>
-            <p class="font-label-md text-label-md font-bold uppercase tracking-wider text-status-danger">
-              Peringatan Risiko Gingivitis Rekuren
-            </p>
-            <p class="mt-1 font-caption text-caption leading-relaxed text-text-secondary">
-              {{ lateCount ?? 0 }} pasien terlambat kontrol dan {{ criticalCount ?? 0 }} pasien tidak hadir
-              sama sekali. Kirim pengingat massal untuk menekan risiko kekambuhan.
-            </p>
-          </div>
-        </div>
-        <Button
-          type="button"
-          size="sm"
-          class="mt-1 gap-2 self-start rounded-lg bg-status-danger text-on-primary hover:bg-status-danger/90"
-          :disabled="isBlasting"
-          @click="emits('blast')"
-        >
-          <Send class="size-4" aria-hidden="true" />
-          {{ isBlasting ? 'Mengirim Pengingat...' : 'Kirim Blast Pengingat' }}
-        </Button>
-      </div>
     </template>
 
     <div v-else class="flex flex-col items-center gap-2 rounded-lg bg-bg-canvas p-space-lg text-center">

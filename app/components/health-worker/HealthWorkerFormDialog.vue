@@ -73,7 +73,7 @@ const emptyValues = {
   email: '',
   address: '',
   username: '',
-  password: '',
+  password: DEFAULT_PORTAL_PASSWORD,
   accessLevel: 'dokter',
   dutyDays: '',
   dutyTime: '',
@@ -333,22 +333,6 @@ const onSubmit = handleSubmit((values) => {
                   <FormMessage class="font-caption text-caption" />
                 </FormItem>
               </FormField>
-
-              <FormField v-slot="{ value, handleChange }" name="isPic" type="checkbox">
-                <FormItem class="flex items-center gap-space-sm rounded-lg bg-bg-canvas p-space-md sm:col-span-2">
-                  <FormControl>
-                    <Checkbox id="worker-is-pic" :model-value="value"
-                      class="size-4 rounded border-strong data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
-                      @update:model-value="handleChange($event as boolean)" />
-                  </FormControl>
-                  <label for="worker-is-pic" class="flex flex-col cursor-pointer">
-                    <span class="font-label-md text-label-md">Tunjuk sebagai PIC (Penanggung Jawab)</span>
-                    <span class="font-caption text-caption text-text-muted">
-                      Petugas ini menjadi penanggung jawab modul monitoring kalkulus.
-                    </span>
-                  </label>
-                </FormItem>
-              </FormField>
             </template>
 
             <template v-if="section.number === 3">
@@ -406,7 +390,7 @@ const onSubmit = handleSubmit((values) => {
                     {{ isEdit ? 'Password (kosongkan jika tidak diganti)' : 'Password Awal' }}
                   </FormLabel>
                   <FormControl>
-                    <Input v-bind="componentField" type="password" autocomplete="new-password" class="h-10 rounded-lg"
+                    <Input v-bind="componentField" type="text" autocomplete="new-password" class="h-10 rounded-lg"
                       :required="!isEdit" />
                   </FormControl>
                   <FormMessage class="font-caption text-caption" />

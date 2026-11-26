@@ -4,6 +4,9 @@ import type { MonitoringStatus, MonitoringTrendRange } from '~~/shared/schemas/m
 export type MonitoringTrend = 'down' | 'flat' | 'up'
 export type MonitoringHintTone = 'danger' | 'info' | 'muted' | 'success'
 
+/** Nama program bawaan saat pasien pertama kali didaftarkan ke pemantauan. */
+export const DEFAULT_MONITORING_PROGRAM = 'Program Pemantauan Kesehatan Gigi & Mulut'
+
 export interface MonitoringScheduleHintDto {
   text: string
   tone: MonitoringHintTone
